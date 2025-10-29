@@ -1,0 +1,45 @@
+{
+  "name": "nestoroomsbackend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "overrides": {
+    "gcp-metadata": "^5.2.0"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@aws-sdk/client-s3": "3.812.0",
+    "@aws-sdk/cloudfront-signer": "3.813.0",
+    "@aws-sdk/s3-request-presigner": "3.812.0",
+    "axios": "1.10.0",
+    "bcrypt": "6.0.0",
+    "bcryptjs": "3.0.2",
+    "cloudinary": "^2.7.0",
+    "cors": "2.8.5",
+    "dotenv": "16.5.0",
+    "express": "5.1.0",
+    "firebase-admin": "13.2.0",
+    "jsonwebtoken": "9.0.2",
+    "moment": "^2.30.1",
+    "moment-timezone": "^0.6.0",
+    "mongoose": "8.13.2",
+    "multer": "2.0.0",
+    "node-cron": "^4.2.1",
+    "nodemailer": "7.0.3",
+    "sharp": "^0.34.3"
+  },
+  "devDependencies": {
+    "nodemon": "3.1.9"
+  }
+}
