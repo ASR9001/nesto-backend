@@ -107,7 +107,7 @@ export const GoogleUser = async (req, res, next) => {
 
 			user = checkIfUserExist;
 			user.has_logged_in_for_first_time = false;
-			user.fcm_token = req.body.fcm_token
+			user.fcm_token = reqBody.fcm_token
 		} else {
 			// console.log("User Doesn't exist")
 

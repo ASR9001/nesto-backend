@@ -28,26 +28,25 @@ const app = express()
 
 
 
-const allowedOrigins = [
-  'https://abhishek-dir.vercel.app',
-  'https://2475b0b3-6000.inc1.devtunnels.ms',
-  'http://localhost:3000',
-  'https://nesto-test.kunalsize9.workers.dev'
-];
+// const allowedOrigins = [
+//   'https://abhishek-dir.vercel.app',
+//   'https://2475b0b3-6000.inc1.devtunnels.ms',
+//   'http://localhost:3000',
+//   'https://nesto-test.kunalsize9.workers.dev'
+// ];
 
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-}));
+// app.use(cors({
+//   origin: function (origin, callback) {
+//     if (!origin || allowedOrigins.includes(origin)) {
+//       callback(null, true);
+//     } else {
+//       callback(new Error('Not allowed by CORS'));
+//     }
+//   },
+//   credentials: true,
+// }));
 
-
-
+app.use(cors());
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
