@@ -72,7 +72,7 @@ const transactionSchema = new Schema(
         paymentReceivedFrom: {
             type: String,
             required: true,
-            enum: ["PAYU" , 'DUMMY']
+            enum: ["PAYU" , 'DUMMY' , 'RAZORPAY']
         },
         transactionId: {
             type: String,

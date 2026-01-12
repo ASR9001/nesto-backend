@@ -397,3 +397,93 @@ export const propertySearch = async (req, res) => {
     });
   }
 };
+
+
+
+//latest add to show review banner on homescreen to user 
+
+
+
+
+export const getPendingReview = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const bookingAggregation = await Booking.aggregate(
+      [
+        {
+          $match:
+        
+          {
+            userId: new ObjectId(userId),
+            status: "COMPLETED",
+            hasReviewed: false
+          }
+        },
+        {
+          $sort:
+         
+          {
+            createdAt: -1
+          }
+        },
+        {
+          $lookup: {
+            from: "properties",
+            localField: "propertyId",
+            foreignField: "_id",
+            as: "property"
+          }
+        },
+        {
+          $unwind: {
+            path: "$property"
+          }
+        },
+        {
+          $project: {
+            bookingId: 1,
+            propertyId: "$property._id",
+            propertyTitle: "$property.title"
+          }
+        },
+        {
+          $limit:
+
+            1
+        }
+      ]
+    )
+
+    const booking = bookingAggregation[0]
+
+    if (!booking || !booking.propertyId) {
+      return res.status(200).json({
+        statusCode: 200,
+        message: "No pending review",
+        data: null,
+      });
+    }
+
+
+
+    return res.status(200).json({
+      statusCode: 200,
+      message: "Pending review found",
+      data: {
+        bookingId: booking._id,
+        propertyId: booking.propertyId,
+        propertyTitle: booking.propertyTitle,
+      },
+    });
+  } catch (error) {
+    console.error("getPendingReview error:", error);
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Internal server error",
+      data: null,
+    });
+  }
+};
+
+

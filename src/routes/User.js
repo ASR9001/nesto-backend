@@ -1,5 +1,5 @@
 import express from 'express';
-import { createReview, fetchPropertyReviews, propertySearch } from '../controllers/reviewController.js';
+import { createReview, fetchPropertyReviews, getPendingReview, propertySearch } from '../controllers/reviewController.js';
 import { cancelBooking, createBooking, fetchBookingCharges, fetchTransaction, getUserBookings } from '../controllers/bookingController.js';
 import {  getAllPropertiesForUser, getFeaturedProperty, getPropertyById } from '../controllers/propertyController.js';
 import { userVerifyToken } from '../middleware/userVerifyToken.js';
@@ -24,6 +24,7 @@ router.get('/get-single-property/:id', getPropertyById);
 router.post('/create-booking', createBooking);
 // router.post('/:propertyId', userVerifyToken, createReview);
 router.post("/add-review",userVerifyToken , createReview)
+router.get("/pending-review",userVerifyToken , getPendingReview)
 
 
 
