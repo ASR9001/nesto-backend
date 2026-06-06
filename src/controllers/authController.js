@@ -6,6 +6,7 @@ import { OTP } from '../models/otp.js';
 import { sendOTPEmail } from '../services/emailNotification.js';
 import Host from '../models/Host.js';
 import HostEarning from '../models/HostEarning.js';
+import passport from "passport";
 
 // export const register = async (req, res) => {
 //   try {
@@ -151,6 +152,92 @@ export const GoogleUser = async (req, res, next) => {
 			error: error.message,
 		});
 	}
+};
+
+
+export const initiateGoogleLogin = (req, res, next) => {
+  const redirectTo = req.query.redirectTo || "";
+
+  const state = JSON.stringify({ redirectTo });
+
+  passport.authenticate("google", {
+    scope: ["profile", "email"],
+    state, // ✅ pass redirect info
+  })(req, res, next);
+};
+
+
+export const googleCallback = (req, res, next) => {
+  passport.authenticate(
+    "google",
+    { failureRedirect: "/signin" },
+    async (err, profile) => {
+      try {
+        if (err || !profile) {
+          return res.redirect(`${process.env.FRONTEND_BASE_URL}/signin`);
+        }
+
+        // Parse state
+        // const { redirectTo, creatorName } = req.query.state
+        //   ? JSON.parse(req.query.state as string)
+        //   : { redirectTo: "", creatorName: "" };
+
+        let redirectTo = "";
+
+        try {
+          if (req.query.state) {
+            const parsed = JSON.parse(req.query.state);
+            redirectTo = parsed.redirectTo || "";
+          }
+        } catch (e) {
+          console.error("Invalid state", e);
+        }
+
+        const email = profile.emails[0].value.toLowerCase().trim();
+        const firstName = profile.name.givenName;
+        const lastName = profile.name.familyName;
+        const profileImage =
+					profile.photos && profile.photos.length > 0
+						? profile.photos[0].value
+						: null;
+
+        let user = await User.findOne({ email });
+        if (!user) {
+          user = await User.create({
+            first_name: firstName,
+            last_name: lastName,
+            email,
+            login_type: "google",
+            profile_image: profileImage, 
+          });
+
+          await Wallet.create({
+            user_id: user._id,
+            wallet_balance: 0,
+          });
+        }
+
+      	const token = jwt.sign(
+			{ email: user.email, role: "user", firstName: user.first_name },
+			process.env.USER_SECRET_KEY,
+		);
+
+        const safeRedirect = redirectTo ? `/${redirectTo}` : "";
+      res.redirect(
+		`${process.env.FRONTEND_BASE_URL}/?token=${token}&email=${user.email}`
+//   `${process.env.FRONTEND_BASE_URL}/${redirectTo}/chatsection?	=${token}&email=${user.email}`
+//   `${process.env.FRONTEND_BASE_URL}`
+);
+
+        // res.redirect(
+        //   `${process.env.FRONTEND_BASE_URL}/${redirectTo}/signin?token=${token}&email=${user.email}`
+        // );
+      } catch (error) {
+        console.error(error);
+        res.redirect(`${process.env.FRONTEND_BASE_URL}/signin`);
+      }
+    }
+  )(req, res, next);
 };
 
 

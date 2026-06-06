@@ -1,5 +1,5 @@
 import express from 'express';
-import { forgotPassword, GoogleUser, hostLogin, hostLogout, registerHost, resetForgotPassword, sendOtp, verifyOtp, verifyOtpForgotPassword } from '../controllers/authController.js';
+import { forgotPassword, googleCallback, GoogleUser, hostLogin, hostLogout, initiateGoogleLogin, registerHost, resetForgotPassword, sendOtp, verifyOtp, verifyOtpForgotPassword } from '../controllers/authController.js';
 // import admin from '../firebaseAdmin.js';
 import User from '../models/User.js';
 
@@ -8,7 +8,10 @@ const router = express.Router();
 
 // router.post('/register', register);
 // router.post('/login', login);
-router.post('/google-user', GoogleUser);
+// router.post('/google-user', GoogleUser);
+router.get('/google', initiateGoogleLogin);
+router.get("/callback", googleCallback);
+
 
 router.post('/host/register', registerHost )
 

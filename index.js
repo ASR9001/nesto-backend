@@ -16,6 +16,8 @@ import moment from "moment-timezone";
 import Booking from './src/models/Booking.js';
 import HostRevenueHistory from './src/models/HostRevenueHistory.js';
 import HostEarning from './src/models/HostEarning.js';
+import passport from './src/services/passport.js';
+
 
 
 // Load env variables
@@ -27,6 +29,7 @@ connectDB();
 const app = express()
 
 
+app.use(passport.initialize());
 
 // const allowedOrigins = [
 //   'https://abhishek-dir.vercel.app',
