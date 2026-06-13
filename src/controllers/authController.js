@@ -182,16 +182,21 @@ export const googleCallback = (req, res, next) => {
         //   ? JSON.parse(req.query.state as string)
         //   : { redirectTo: "", creatorName: "" };
 
-        let redirectTo = "";
+        //  const redirectTo = req.session.redirectTo || '/';
 
-        try {
-          if (req.query.state) {
-            const parsed = JSON.parse(req.query.state);
-            redirectTo = parsed.redirectTo || "";
-          }
-        } catch (e) {
-          console.error("Invalid state", e);
-        }
+ const { redirectTo } = req.query.state
+          ? JSON.parse(req.query.state)
+          : { redirectTo: ""};
+
+
+        // try {
+        //   if (req.query.state) {
+        //     const parsed = JSON.parse(req.query.state);
+        //     redirectTo = parsed.redirectTo || "";
+        //   }
+        // } catch (e) {
+        //   console.error("Invalid state", e);
+        // }
 
         const email = profile.emails[0].value.toLowerCase().trim();
         const firstName = profile.name.givenName;
@@ -207,14 +212,10 @@ export const googleCallback = (req, res, next) => {
             first_name: firstName,
             last_name: lastName,
             email,
-            login_type: "google",
+            sign_up_method: "Google",
             profile_image: profileImage, 
           });
 
-          await Wallet.create({
-            user_id: user._id,
-            wallet_balance: 0,
-          });
         }
 
       	const token = jwt.sign(
@@ -223,8 +224,12 @@ export const googleCallback = (req, res, next) => {
 		);
 
         const safeRedirect = redirectTo ? `/${redirectTo}` : "";
+		console.log("link" , `${redirectTo}/?token=${token}&email=${user.email}`)
       res.redirect(
-		`${process.env.FRONTEND_BASE_URL}/?token=${token}&email=${user.email}`
+		`${process.env.FRONTEND_BASE_URL}/?redirectTo=${redirectTo}&token=${token}&email=${user.email}`
+    //   res.redirect(
+	// 	`${process.env.FRONTEND_BASE_URL}/${redirectTo}?token=${token}&email=${user.email}`
+		
 //   `${process.env.FRONTEND_BASE_URL}/${redirectTo}/chatsection?	=${token}&email=${user.email}`
 //   `${process.env.FRONTEND_BASE_URL}`
 );
