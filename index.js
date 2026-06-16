@@ -83,7 +83,7 @@ app.use('/api/chat', chatRoutes)
 const PORT = process.env.PORT || 6000
 // app.listen(PORT, () => console.log(`Server running on PORT:-${PORT}`))
 server.listen(PORT, () => {
-	console.log(`Server: http://localhost:${PORT}`.blue);
+	console.log(`Server: http://localhost:${PORT}`);
 	// console.log(
 	// 	"\nGet Bot Framework Emulator: https://aka.ms/botframework-emulator",
 	// );
