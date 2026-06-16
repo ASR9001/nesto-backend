@@ -5,7 +5,7 @@ import User from '../models/User.js';
 export const userVerifyToken = async (req, res, next) => {
   try {
     const bearerHeader = req.headers["authorization"];
-    console.log("my header" , req.headers)
+    // console.log("my header" , req.headers)
     const token = bearerHeader.split(" ")[1];
     if (!token)
       return res.send({

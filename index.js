@@ -1,6 +1,8 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import http from 'node:http';
+
 import userRouter from './src/routes/User.js'
 import authRoutes from './src/routes/Authentication.js';
 import bookingRoutes from './src/routes/bookingRoutes.js';
@@ -17,6 +19,7 @@ import Booking from './src/models/Booking.js';
 import HostRevenueHistory from './src/models/HostRevenueHistory.js';
 import HostEarning from './src/models/HostEarning.js';
 import passport from './src/services/passport.js';
+import { setupSocketServer } from './src/config/socket.js';
 
 
 
@@ -30,6 +33,11 @@ const app = express()
 
 
 app.use(passport.initialize());
+
+
+export const server = http.createServer(app);
+
+setupSocketServer(server)
 
 // const allowedOrigins = [
 //   'https://abhishek-dir.vercel.app',
@@ -73,7 +81,14 @@ app.use('/api/chat', chatRoutes)
 
 
 const PORT = process.env.PORT || 6000
-app.listen(PORT, () => console.log(`Server running on PORT:-${PORT}`))
+// app.listen(PORT, () => console.log(`Server running on PORT:-${PORT}`))
+server.listen(PORT, () => {
+	console.log(`Server: http://localhost:${PORT}`.blue);
+	// console.log(
+	// 	"\nGet Bot Framework Emulator: https://aka.ms/botframework-emulator",
+	// );
+	// console.log('\nTo talk to your bot, open the emulator select "Open Bot"');
+});
 
 
 

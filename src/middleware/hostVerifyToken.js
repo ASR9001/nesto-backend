@@ -14,7 +14,7 @@ export const hostVerifyToken = async (req, res, next) => {
         error: "Access denied.",
       });
     }
-    console.log("my header", req.headers)
+    // console.log("my header", req.headers)
     const token = bearerHeader.split(" ")[1];
     if (!token)
       return res.send({
