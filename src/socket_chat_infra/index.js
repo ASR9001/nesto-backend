@@ -5,7 +5,10 @@ import jwt from 'jsonwebtoken';
 
 import { redisSocketClient } from '../config/socket.js';
 import moment from 'moment';
+import { findCreatorDetails, findUserDetails } from './functions/helper.js';
+import User from '../models/User.js';
 
+const rooms = new Set();
 
 
 
@@ -27,91 +30,94 @@ export const setupSocketMiddleware = (io) => {
 
 			token = token.startsWith("Bearer ") ? token.slice(7) : token;
 
-			// if (from === "creator") {
-			// 	const decoded = jwt.verify(token, process.env.CREATOR_SECRET_KEY);
+			// return next();
 
-			// 	const getCreatorIdFromHashMapper = await HashMapper.findOne({
-			// 		secret_value: decoded.id,
-			// 		active: true,
-			// 	});
+			if (from === "creator") {
+				const decoded = jwt.verify(token, process.env.CREATOR_SECRET_KEY);
 
-			// 	if (!getCreatorIdFromHashMapper) {
-			// 		throw new Error("Failed to find details in HashMapper");
-			// 	}
+				const getCreatorIdFromHashMapper = await HashMapper.findOne({
+					secret_value: decoded.id,
+					active: true,
+				});
 
-			// 	const fetchCreatorDetails = await Creator.findById(
-			// 		getCreatorIdFromHashMapper.id,
-			// 	);
+				if (!getCreatorIdFromHashMapper) {
+					throw new Error("Failed to find details in HashMapper");
+				}
 
-			// 	if (!fetchCreatorDetails || fetchCreatorDetails.influencer_login_token !== token) {
-			// 		throw new Error("Authentication error: Invalid token");
-			// 	}
+				const fetchCreatorDetails = await Creator.findById(
+					getCreatorIdFromHashMapper.id,
+				);
 
-			// 	const creatorId = fetchCreatorDetails.id;
+				if (!fetchCreatorDetails || fetchCreatorDetails.influencer_login_token !== token) {
+					throw new Error("Authentication error: Invalid token");
+				}
 
-			// 	// ✅ Old socket disconnect — Redis se lo
-			// 	const oldSocketId = await redisSocketClient.get(`creator:socket:${creatorId}`);
+				const creatorId = fetchCreatorDetails.id;
 
-			// 	if (oldSocketId && oldSocketId !== socket.id) {
-			// 		const oldSocket = io.sockets.sockets.get(oldSocketId);
+				// ✅ Old socket disconnect — Redis se lo
+				const oldSocketId = await redisSocketClient.get(`creator:socket:${creatorId}`);
 
-			// 		if (oldSocket) {
-			// 			// console.log(`Disconnecting old Influencer socket ${oldSocketId} for Influencer ${creatorId}`);
-			// 			try {
-			// 				oldSocket.emit("force_disconnect", {
-			// 					message: "New socket connected for same creator",
-			// 					id: uuidv(),
-			// 				});
-			// 			} catch (e) { }
+				if (oldSocketId && oldSocketId !== socket.id) {
+					const oldSocket = io.sockets.sockets.get(oldSocketId);
 
-			// 			oldSocket.disconnect(true);
-			// 		}
-			// 	}
+					if (oldSocket) {
+						// console.log(`Disconnecting old Influencer socket ${oldSocketId} for Influencer ${creatorId}`);
+						try {
+							oldSocket.emit("force_disconnect", {
+								message: "New socket connected for same creator",
+								id: uuidv(),
+							});
+						} catch (e) { }
 
-			// 	// ✅ Redis mein save karo
-			// 	await redisSocketClient.set(`creator:socket:${creatorId}`, socket.id);
+						oldSocket.disconnect(true);
+					}
+				}
 
-			// 	socket.join(creatorId);
-			// 	rooms.add(creatorId);
+				// ✅ Redis mein save karo
+				await redisSocketClient.set(`creator:socket:${creatorId}`, socket.id);
 
-			// 	socket.creator = {
-			// 		id: fetchCreatorDetails.id,
-			// 		email: fetchCreatorDetails.email,
-			// 		role: decoded.role,
-			// 		iat: decoded.iat
-			// 	};
+				socket.join(creatorId);
+				rooms.add(creatorId);
 
-			// 	return next();
-			// }
+				socket.creator = {
+					id: fetchCreatorDetails.id,
+					email: fetchCreatorDetails.email,
+					role: decoded.role,
+					iat: decoded.iat
+				};
 
-			// else if (from === "user") {
-			// 	const decoded = jwt.verify(token, process.env.USER_SECRET_KEY);
+				return next();
+			}
 
-			// 	const fetchUserDetails = await User.findById(decoded.id);
+			else if (from === "user") {
+				const decoded = jwt.verify(token, process.env.USER_SECRET_KEY);
 
-			// 	if (!fetchUserDetails) {
-			// 		throw new Error("User not found!");
-			// 	}
+				// const fetchUserDetails = await User.findById(decoded.id);
+				const fetchUserDetails = await User.findOne({email:decoded.email});
 
-			// 	// ✅ fetchUserDetails.id use karo — userId typo fix
-			// 	await redisSocketClient.set(`user:socket:${fetchUserDetails.id}`, socket.id);
+				if (!fetchUserDetails) {
+					throw new Error("User not found!");
+				}
 
-			// 	socket.join(fetchUserDetails.id);
-			// 	rooms.add(fetchUserDetails.id);
+				// ✅ fetchUserDetails.id use karo — userId typo fix
+				await redisSocketClient.set(`user:socket:${fetchUserDetails.id}`, socket.id);
 
-			// 	socket.user = {
-			// 		id: fetchUserDetails.id,
-			// 		email: fetchUserDetails.email,
-			// 		role: decoded.role,
-			// 		iat: decoded.iat,
-			// 	};
+				socket.join(fetchUserDetails.id);
+				rooms.add(fetchUserDetails.id);
 
-			// 	return next();
-			// }
+				socket.user = {
+					id: fetchUserDetails.id,
+					email: fetchUserDetails.email,
+					role: decoded.role,
+					iat: decoded.iat,
+				};
 
-			// else if (from === "admin") {
-			// 	return next();
-			// }
+				return next();
+			}
+
+			else if (from === "admin") {
+				return next();
+			}
 
 		} catch (error) {
 			const socketId = socket.id;
@@ -163,7 +169,7 @@ export const setupSocketHandlers = (io) => {
 
 		socket.onAny((event, ...data) => {
 			try {
-				const id = uuidv()
+				// const id = uuidv()
 				const socketCreator = socket?.creator ?? {}
 				const socketUser = socket?.user ?? {}
 				const socketData = {
@@ -171,7 +177,7 @@ export const setupSocketHandlers = (io) => {
 				}
 				
 			} catch (error) {
-				const id = uuidv()
+				// const id = uuidv()
 				const socketCreator = socket?.creator ?? {}
 				const socketUser = socket?.user ?? {}
 
@@ -180,7 +186,7 @@ export const setupSocketHandlers = (io) => {
 				}
 
 			}
-			const id = uuidv()
+			// const id = uuidv()
 			const socketCreator = socket?.creator ?? {}
 			const socketUser = socket?.user ?? {}
 			const socketData = {
@@ -204,7 +210,7 @@ export const setupSocketHandlers = (io) => {
 
 
 		socket.on("error", (err) => {
-			const id = uuidv()
+			// const id = uuidv()
 			const socketCreator = socket?.creator ?? {}
 			const socketUser = socket?.user ?? {}
 
@@ -217,393 +223,6 @@ export const setupSocketHandlers = (io) => {
 			socket.disconnect();
 
 		});
-
-
-		socket.on("setupConnectionWithInfluencer", async (data) => {
-			// console.log("setupConnectionWithInfluencer")
-			const { creator_email, fcm_token, pushy_device_id, ios_device_id } = data;
-			const socketEvent = "setupConnectionWithInfluencer"
-			try {
-				//
-				//checking if the creator is not exist
-				if (!socket.creator.id) {
-					return io
-						.to(socket.id)
-						.emit("initializedConnectionWithInfluencerError", {
-							message: "Malformed or Expired Token of Creator", id: uuidv()
-						});
-				}
-
-				const checkIfCreatorExist = await Creator.findById(socket.creator.id);
-				if (!checkIfCreatorExist) {
-					return io
-						.to(socket.id)
-						.emit("initializedConnectionWithInfluencerError", {
-							message: "Creator doesn't exist", id: uuidv()
-						});
-				}
-
-				checkIfCreatorExist.fcm_token = fcm_token;
-				checkIfCreatorExist.pushy_device_id = pushy_device_id;
-				checkIfCreatorExist.ios_device_id = ios_device_id;
-				checkIfCreatorExist.creator_status = "available";
-				await checkIfCreatorExist.save();
-
-				const checkIfCreatorSocketConnectionExist =
-					await creatorOnlineStatus.findOne({
-						creator_id: socket.creator.id,
-					});
-				if (checkIfCreatorSocketConnectionExist) {
-					checkIfCreatorSocketConnectionExist.socket_id = socket.id;
-					checkIfCreatorSocketConnectionExist.is_connected = true;
-					checkIfCreatorSocketConnectionExist.lastSeen = new Date();
-					await checkIfCreatorSocketConnectionExist.save();
-				} else {
-					await creatorOnlineStatus.create({
-						creator_id: socket.creator.id,
-						creator_email,
-						is_connected: true,
-						lastSeen: new Date(),
-						socket_id: socket.id,
-					});
-				}
-
-				// io.to(socket.creator.id).emit("initializedConnectionWithInfluencer", {
-				// 	message: "Connection Established Successfully",
-				// 	data: socket.creator,
-				// 	id: uuidv()
-				// });
-
-				io.to(socket.id).emit("initializedConnectionWithInfluencer", {
-					message: "Connection Established Successfully",
-					data: socket.creator,
-					id: uuidv()
-				});
-
-				const findAllConversationWithCreator =
-					await creatorUserConversation.find({
-						creator_id: socket.creator.id,
-					});
-
-				// io.to(`${socket.creator.id}_users`).emit("creator_status", {
-				// 	creator_online: true,
-				// 	message: "Creator is now online",
-				// 	id: uuidv()
-				// });
-				// io.to(`${socket.creator.id}_users`).emit("creator_mode", {
-				// 	message: `${checkIfCreatorExist.first_name} is now live`,
-				// 	type: checkIfCreatorExist.creator_status,
-				// 	ai_mode: false,
-				// 	id: uuidv()
-				// });
-
-				await emitCreatorUnreadChatCount(io, socket.creator.id);
-
-
-			} catch (error) {
-				const id = uuidv()
-				const socketCreator = socket?.creator ?? {}
-				const socketUser = socket?.user ?? {}
-
-				const socketData = {
-					data, socketHeaders, socketRooms, socketCreator, socketUser, socketId
-				}
-
-
-				return io
-					.to(socket.id)
-					.emit("initializedConnectionWithInfluencerError", {
-						message:
-							"Something went wrong in initializing connection of flutter",
-						error: true,
-						error_details: error,
-						id: uuidv()
-					});
-			}
-
-		});
-
-		socket.on("setupConnectionWithUser", async (data) => {
-			try {
-				const { creator_id, fcm_token } = data;
-				if (!socket.user.id) {
-					return io.to(socket.id).emit("setupConnectionWithUserError", {
-						message: "Malformed or Expired Token of User", id: uuidv()
-					});
-				}
-
-				const creatorDetails = await Creator.findById(creator_id);
-				if (!creatorDetails) {
-					return io.to(socket.id).emit("messageError", {
-						message: "Creator doesn't exist", id: uuidv()
-					});
-				}
-
-				socket.join(`${creator_id}_users`);
-
-				const userDetails = await User.findById(socket.user.id);
-				//checking if creator status
-				// const check_creator_status = await creatorOnlineStatus.findOne({
-				//   creator_id: creator_id,
-				// });
-
-				userDetails.fcm_token = fcm_token;
-				userDetails.save();
-				// if (creatorDetails.creator_status == "available") {
-				// 	io.to(socket.user.id).emit("creator_status", {
-				// 		creator_online: true,
-				// 		message: "Creator is now online",
-				// 		id: uuidv()
-				// 	});
-				// 	// io.to(socket.user.id).emit("creator_mode", {
-				// 	// 	message: `${creatorDetails?.first_name} is now live`,
-				// 	// 	type: "ai_mode",
-				// 	// 	ai_mode: false,
-				// 	// 	id: uuidv()
-				// 	// });
-				// } else if (creatorDetails.creator_status === "ai_mode") {
-				// 	io.to(socket.user.id).emit("creator_status", {
-				// 		creator_online: false,
-				// 		message: "Creator is now offline",
-				// 		id: uuidv()
-				// 	});
-				// 	// io.to(socket.user.id).emit("creator_mode", {
-				// 	// 	message: `${creatorDetails?.first_name}.ai is now live`,
-				// 	// 	type: "ai_mode",
-				// 	// 	ai_mode: true,
-				// 	// 	id: uuidv()
-				// 	// });
-				// }
-
-				// const checkCreatorBotStatus = await CreatorBotSetting.findOne({
-				// 	creator_id: creator_id,
-				// });
-
-				// if (checkCreatorBotStatus?.message) {
-				// 	io.to(socket.user.id).emit("creator_bot_status", {
-				// 		message: "Creator has updated bot status",
-				// 		status: checkCreatorBotStatus.message,
-				// 		id: uuidv()
-				// 	});
-				// }
-
-				let conversationData;
-				const getConversationDetails = await creatorUserConversation.findOne({
-					user_id: socket.user.id,
-					creator_id,
-				});
-				if (getConversationDetails) {
-					// getConversationDetails.user_socket_id = socket.id;
-					await getConversationDetails.save();
-					conversationData = getConversationDetails;
-				} else {
-					conversationData = await creatorUserConversation.create({
-						user_id: socket.user.id,
-						creator_id,
-						user_socket_id: socket.id,
-					});
-
-					// await createAndSendAIMessage(
-					// 	conversationData.id,
-					// 	"text",
-					// 	creatorDetails.creator_message,
-					// 	userDetails,
-					// 	creatorDetails,
-					// 	"AI",
-					// );
-
-					// await createAndSendMessage(
-					// 	conversationData.id,
-					// 	"text",
-					// 	creatorDetails.creator_message,
-					// 	userDetails,
-					// 	creatorDetails,
-					// 	"creator",
-					// 	from_ai,
-					// 	[],
-					// );
-				}
-
-
-
-				const wallet = await Wallet.findOne({ user_id: socket.user.id });
-
-				io.to(socket.user.id).emit("initializedConnectionWithUser", {
-					conversation_id: conversationData.id,
-					wallet_balance: wallet.wallet_balance,
-					id: uuidv()
-				});
-
-				const checkIfUserHasVisitedCreatorPreviously = await UserVisit.findOne({
-					creator_id: creatorDetails.id,
-					user_id: userDetails.id,
-				});
-
-				if (checkIfUserHasVisitedCreatorPreviously) {
-					// console.log("User has already visited the creator");
-				} else {
-					await UserVisit.create({
-						creator_id: creatorDetails.id,
-						user_id: userDetails.id,
-					});
-				}
-				try {
-					//
-					if (getConversationDetails.is_creator_notified == false) {
-						// admin.messaging().send({
-						//   notification: {
-						//     title: `${user_details.first_name} ${user_details.last_name}`,
-						//     body: "Hey, Someone wants to chat with you",
-						//   },
-						//   token: creator_details.fcm_token,
-						//   data: {
-						//     type: "chat",
-						//     creatorId: creator_details.id,
-						//     creatorName: `${creator_details.first_name} ${creator_details.last_name}`,
-						//     userId: user_details.email,
-						//     userName: `${user_details.first_name} ${user_details.last_name}`,
-						//     conversationId: conversation_data.id,
-						//   },
-						// });
-						getConversationDetails.is_creator_notified = true;
-						await getConversationDetails.save();
-					} else {
-						// console.log("Creator is already notified");
-					}
-				} catch (error) {
-
-					const id = uuidv()
-
-
-					const socketCreator = socket?.creator ?? {}
-					const socketUser = socket?.user ?? {}
-
-					const socketData = {
-						data, socketHeaders, socketRooms, socketCreator, socketUser, socketId
-					}
-
-					return socket.emit("messageError", {
-						message: "An error occurred while sending notification to creator", id: uuidv()
-					});
-				}
-			}
-			catch (error) {
-				const id = uuidv()
-
-				const socketCreator = socket?.creator ?? {}
-				const socketUser = socket?.user ?? {}
-
-				const socketData = {
-					data, socketHeaders, socketRooms, socketCreator, socketUser, socketId
-				}
-
-
-
-				return socket.emit("messageError", {
-					message:
-						"An error occurred. Unable to initiate web connection of user",
-					error: true,
-					error_details: error,
-					id: uuidv()
-				});
-			}
-		});
-
-
-
-		socket.on("update_chat_window_visibility/test", async (data) => {
-			const socketEvent = "update_chat_window_visibility";
-			try {
-				//
-				const { from, isCreatorChatting, userId, creatorId, isUserChatting } = data;
-				// const user_id = socket?.user?.id;
-				// const creator_id = socket?.creator?.id;
-
-				const checkChatConnectivity = await chatConnectivity.findOne({
-					user_id: userId,
-					creator_id: creatorId
-				});
-
-				if (from === "flutter") {
-					if (!checkChatConnectivity) {
-						await chatConnectivity.create({
-							user_id: userId,
-							creator_id: creatorId,
-							is_user_on_chat_window: false,
-							is_creator_on_chat_window: isCreatorChatting
-						});
-					} else {
-						await chatConnectivity.findByIdAndUpdate(checkChatConnectivity._id, {
-							is_creator_on_chat_window: isCreatorChatting
-						});
-					}
-					// if (isCreatorChatting) {
-					// 	const message = "Creator chat window is now visible!";
-
-					// 	io.to(userId).emit("chat_window_visibility", { content: message, id: uuidv() })
-
-					// }
-					if (isCreatorChatting) {
-						io.to(String(userId)).emit("chat_window_visibility", {
-							content: "Creator chat window is now visible!",
-							id: uuidv()
-						});
-					}
-				}
-
-				if (from === "web") {
-					if (!checkChatConnectivity) {
-						await chatConnectivity.create({
-							user_id: userId,
-							creator_id: creatorId,
-							is_user_on_chat_window: isUserChatting,
-							is_creator_on_chat_window: false
-						});
-					} else {
-						await chatConnectivity.findByIdAndUpdate(checkChatConnectivity._id, {
-							is_user_on_chat_window: isUserChatting
-						});
-					}
-
-					// socket.on("chat_window_visibility" , async (data) => {
-					// 	if (data) {
-					// 		const message = "User chat window is now visible!";
-					// 		socket.emit("chat_window_visibility_response", { content: message });
-					// 	}
-					// })
-					if (isUserChatting) {
-						io.to(String(creatorId)).emit("chat_window_visibility", {
-							content: "User chat window is now visible!",
-							id: uuidv()
-						});
-					}
-
-
-
-				}
-
-			} catch (error) {
-				const id = uuidv()
-
-				const socketCreator = socket?.creator ?? {}
-				const socketUser = socket?.user ?? {}
-
-				const socketData = {
-					data, socketHeaders, socketRooms, socketCreator, socketUser, socketId
-				}
-
-				socket.emit("update_chat_window_response", {
-					status: 500,
-					message: "Internal server error",
-					data: null,
-					id: uuidv()
-				});
-			}
-		});
-
-
-
-
 
 
 		socket.on("sendMessage", async (data) => {
@@ -622,37 +241,37 @@ export const setupSocketHandlers = (io) => {
 
 
 
-				const conversationExists = await creatorUserConversation.findOne({
-					_id: conversation_id,
+				// const conversationExists = await creatorUserConversation.findOne({
+				// 	_id: conversation_id,
 
-				});
+				// });
 
-				if (!conversationExists) {
-					return io.to(socket.id).emit("messageError", {
-						message: "Conversation History Does Not Exist",
-						id: uuidv()
-					});
-				}
+				// if (!conversationExists) {
+				// 	return io.to(socket.id).emit("messageError", {
+				// 		message: "Conversation History Does Not Exist"
+				// 		// id: uuidv()
+				// 	});
+				// }
 
 				if (from === "web") {
 					// conversationExists.user_socket_id = socket.id;
 
-					const checkIfUserCanMessage = await checkPermissionOfUser(
-						userDetails,
-						creatorDetails,
-						type,
-					);
+					// const checkIfUserCanMessage = await checkPermissionOfUser(
+					// 	userDetails,
+					// 	creatorDetails,
+					// 	type,
+					// );
 
-					if (checkIfUserCanMessage?.error) {
-						const generateAmountCard =
-							await chat_message_recharge_modal_for_insufficient_balance(
-								checkIfUserCanMessage,
-							);
-						//User Cant Send Message due to insufficient balance
-						return io
-							.to(socket.id)
-							.emit("insufficientToken", { generateAmountCard: checkIfUserCanMessage?.data, id: uuidv() });
-					}
+					// if (checkIfUserCanMessage?.error) {
+					// 	const generateAmountCard =
+					// 		await chat_message_recharge_modal_for_insufficient_balance(
+					// 			checkIfUserCanMessage,
+					// 		);
+					// 	//User Cant Send Message due to insufficient balance
+					// 	return io
+					// 		.to(socket.id)
+					// 		.emit("insufficientToken", { generateAmountCard: checkIfUserCanMessage?.data });
+					// }
 				} else if (from === "flutter") {
 					conversationExists.creator_socket_id = socket.id;
 				}
@@ -753,7 +372,7 @@ export const setupSocketHandlers = (io) => {
 
 							const contentUrl = await generateSignedCloudfrontUrl(item.s3Path, expiryTime);
 
-							const updatedContent = { _id: uuidv(), url: contentUrl };
+							const updatedContent = { url: contentUrl };
 
 							contentWithUrl.push(updatedContent);
 						}
@@ -772,7 +391,7 @@ export const setupSocketHandlers = (io) => {
 						io.to(socket.user.id).emit("fetchedUserToken", {
 							message: "User Token Fetched Successfully",
 							wallet_balance: (wallet.wallet_balance),
-							id: uuidv()
+							// id: uuidv()
 						});
 
 						const deduct_token = await deductToken(
@@ -812,7 +431,7 @@ export const setupSocketHandlers = (io) => {
 						io.to(socket.user.id).emit("messageSentToInfluencer", {
 							message: `Message Sent To Influencer Successfully`,
 							data: messageResponse,
-							id: uuidv()
+							// id: uuidv()
 						});
 
 
@@ -832,7 +451,7 @@ export const setupSocketHandlers = (io) => {
 						io.to(String(conversationExists.creator_id)).emit("messageReceived", {
 							data: messageResponse,
 							message: `Message Received From User Successfully`,
-							id: uuidv()
+							// id: uuidv()
 						});
 
 
@@ -885,7 +504,7 @@ export const setupSocketHandlers = (io) => {
 
 							const contentUrl = await generateSignedCloudfrontUrl(item.s3Path, expiryTime);
 
-							const updatedContent = { _id: uuidv(), url: contentUrl };
+							const updatedContent = { url: contentUrl };
 
 							contentWithUrl.push(updatedContent);
 						}
@@ -909,7 +528,7 @@ export const setupSocketHandlers = (io) => {
 						io.to(String(conversationExists.user_id)).emit("messageReceived", {
 							data: messageResponse,
 							message: `Message Received From Influencer Successfully`,
-							id: uuidv()
+							// id: uuidv()
 						});
 						// 69ff3c4cf5be4724585b8925     ledrazpdNRlNMtTHAAAB
 
@@ -922,7 +541,7 @@ export const setupSocketHandlers = (io) => {
 						io.to(String(socket.id)).emit("messageSentToUser", {
 							message: `Message Sent To User Successfully`,
 							data: messageResponse,
-							id: uuidv()
+							// id: uuidv()
 						});
 
 
@@ -935,7 +554,7 @@ export const setupSocketHandlers = (io) => {
 							: "unable_to_send_message_to_user",
 						{
 							message: "Conversation is not initialized",
-							id: uuidv()
+							// id: uuidv()
 						},
 					);
 				}
@@ -943,7 +562,7 @@ export const setupSocketHandlers = (io) => {
 			} catch (error) {
 				// await session.abortTransaction();
 
-				const id = uuidv()
+				// const id = uuidv()
 				const socketCreator = socket?.creator ?? {}
 				const socketUser = socket?.user ?? {}
 
@@ -954,7 +573,7 @@ export const setupSocketHandlers = (io) => {
 
 				io.to(socket.id).emit("messageError", {
 					message: "An error occurred while sending the message.",
-					id: uuidv()
+					// id: uuidv()
 				});
 			} finally {
 				// session.endSession();

@@ -10,19 +10,19 @@ export const createReview = async (req, res) => {
     const { rating, comment, bookingId, propertyId } = req.body;
     const userId = req.user.id
 
-    const existingReview = await Review.findOne({
-      user: userId,
-      property: propertyId,
-    });
+    // const existingReview = await Review.findOne({
+    //   user: userId,
+    //   property: propertyId,
+    // });
 
-    if (existingReview) {
-      return res.status(400).json({
-        statusCode: 400,
-        message: "You have already reviewed this property",
-        data: null,
-        error: null
-      });
-    }
+    // if (existingReview) {
+    //   return res.status(400).json({
+    //     statusCode: 400,
+    //     message: "You have already reviewed this property",
+    //     data: null,
+    //     error: null
+    //   });
+    // }
 
     const review = await Review.create({
       user: userId,
@@ -32,9 +32,19 @@ export const createReview = async (req, res) => {
     });
 
 
-    await Booking.findOneAndUpdate({
-      _id: bookingId
-    }, { hasReviewed: true })
+    // await Booking.findOneAndUpdate({
+    //   propertyId: propertyId
+    // }, { hasReviewed: true })
+
+
+    await Booking.findOneAndUpdate(
+  { propertyId },
+  { hasReviewed: true },
+  {
+    sort: { createdAt: -1 }, // latest document
+    new: true,
+  }
+);
 
     return res.status(200).json({
       statusCode: 200,
@@ -444,7 +454,8 @@ export const getPendingReview = async (req, res) => {
           $project: {
             bookingId: 1,
             propertyId: "$property._id",
-            propertyTitle: "$property.title"
+            propertyTitle: "$property.title",
+            createdAt:1
           }
         },
         {
@@ -474,6 +485,7 @@ export const getPendingReview = async (req, res) => {
         bookingId: booking._id,
         propertyId: booking.propertyId,
         propertyTitle: booking.propertyTitle,
+        createdAt:booking.createdAt
       },
     });
   } catch (error) {

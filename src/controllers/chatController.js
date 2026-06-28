@@ -7,6 +7,7 @@ import Host from "../models/Host.js";
 import { uploadToCloudinary } from "../services/utilities/cloudinary.js";
 import Property from "../models/Property.js";
 import axios from "axios";
+import { io } from '../config/socket.js';
 
 // export const fetchSingleChat = async (req, res) => {
 //     try {
@@ -928,6 +929,7 @@ export const sendMessage = async (req, res) => {
       _id: userId
     })
 
+
     const newMessage = new Message({
       messageText,
       messageFrom,
@@ -949,6 +951,13 @@ export const sendMessage = async (req, res) => {
       "body": `${user?.first_name} says: "${textMsg}"`,
       "sound": "default"
     }
+
+    io.to(host?._id.toString()).emit("messageSentToInfluencer", {
+      message: `Message Sent To Influencer Successfully`,
+      data: newMessage,
+      // id: uuidv()
+    });
+
 
 
     try {
