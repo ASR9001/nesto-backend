@@ -80,6 +80,11 @@ const bookingSchema = new mongoose.Schema({
     timestamps: true,
 });
 
+bookingSchema.index({ userId: 1 });
+bookingSchema.index({ hostId: 1 });
+bookingSchema.index({ propertyId: 1 });
+bookingSchema.index({ status: 1 });
+
 const Booking = mongoose.model('Booking', bookingSchema);
 export default Booking;
 

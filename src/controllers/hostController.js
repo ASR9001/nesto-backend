@@ -528,3 +528,66 @@ export const getHostBankDetails = async (req, res) => {
     });
   }
 }
+
+export const updateFcmToken = async (req, res) => {
+  try {
+    const hostId = req.hostInfo?.id;
+    const { fcmToken } = req.body;
+
+    if (!hostId) {
+      return res.status(401).json({
+        statusCode: 401,
+        message: "Access denied. Not authorized.",
+        data: null,
+        error: null,
+      });
+    }
+
+    if (!fcmToken && fcmToken !== "") {
+      return res.status(400).json({
+        statusCode: 400,
+        message: "FCM Token not provided.",
+        data: null,
+        error: null,
+      });
+    }
+
+    const host = await Host.findById(hostId);
+    if (!host) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "Host account not found.",
+        data: null,
+        error: null,
+      });
+    }
+
+    // Cost-saving: Avoid database update if token is unchanged
+    if (host.fcmToken === fcmToken) {
+      return res.status(200).json({
+        statusCode: 200,
+        message: "FCM token is already up to date.",
+        data: null,
+        error: null,
+      });
+    }
+
+    host.fcmToken = fcmToken;
+    await host.save();
+
+    return res.status(200).json({
+      statusCode: 200,
+      message: "FCM Token updated successfully",
+      data: null,
+      error: null,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      statusCode: 500,
+      data: null,
+      message: error.message,
+      error: error,
+    });
+  }
+};
+

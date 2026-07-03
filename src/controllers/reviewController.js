@@ -38,13 +38,13 @@ export const createReview = async (req, res) => {
 
 
     await Booking.findOneAndUpdate(
-  { propertyId },
-  { hasReviewed: true },
-  {
-    sort: { createdAt: -1 }, // latest document
-    new: true,
-  }
-);
+      { propertyId },
+      { hasReviewed: true },
+      {
+        sort: { createdAt: -1 }, // latest document
+        new: true,
+      }
+    );
 
     return res.status(200).json({
       statusCode: 200,
@@ -277,12 +277,35 @@ export const propertySearch = async (req, res) => {
       guestCapacity: { $gte: Number(guests || 1) }
     };
 
+    // if (city) {
+    //   matchStage['location.city'] = { $regex: new RegExp(city, 'i') };
+    // }
+
     if (city) {
-      matchStage['location.city'] = { $regex: new RegExp(city, 'i') };
+      const words = city.trim().split(/\s+/);
+
+      matchStage.$or = words.map(word => ({
+        "location.city": {
+          $regex: word,
+          $options: "i"
+        }
+      }));
     }
 
+    // if (area) {
+    //   matchStage['location.address'] = { $regex: new RegExp(area, 'i') };
+    // }
+
+
     if (area) {
-      matchStage['location.address'] = { $regex: new RegExp(area, 'i') };
+      const words = area.trim().split(/\s+/);
+
+      matchStage.$or = words.map(word => ({
+        "location.address": {
+          $regex: word,
+          $options: "i"
+        }
+      }));
     }
 
     // 🟡 Check date overlap (only if both dates provided)
@@ -423,7 +446,7 @@ export const getPendingReview = async (req, res) => {
       [
         {
           $match:
-        
+
           {
             userId: new ObjectId(userId),
             status: "COMPLETED",
@@ -432,7 +455,7 @@ export const getPendingReview = async (req, res) => {
         },
         {
           $sort:
-         
+
           {
             createdAt: -1
           }
@@ -455,7 +478,7 @@ export const getPendingReview = async (req, res) => {
             bookingId: 1,
             propertyId: "$property._id",
             propertyTitle: "$property.title",
-            createdAt:1
+            createdAt: 1
           }
         },
         {
@@ -485,7 +508,7 @@ export const getPendingReview = async (req, res) => {
         bookingId: booking._id,
         propertyId: booking.propertyId,
         propertyTitle: booking.propertyTitle,
-        createdAt:booking.createdAt
+        createdAt: booking.createdAt
       },
     });
   } catch (error) {

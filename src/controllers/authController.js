@@ -296,6 +296,20 @@ export const registerHost = async (req, res) => {
 
         email = email.toLowerCase();
 
+		// Enforce OTP verification check
+		const verifiedOtp = await OTP.findOne({
+			email: email,
+			isVerified: true
+		});
+
+		if (!verifiedOtp) {
+			return res.status(400).json({
+				statusCode: 400,
+				message: "Email verification required. Please verify OTP first.",
+				data: null,
+				error: null
+			});
+		}
 
 		const salt = await bcrypt.genSalt(10);
 		const hashedPassword = await bcrypt.hash(password, salt);
@@ -320,6 +334,9 @@ export const registerHost = async (req, res) => {
 				error: null
 			})
 		}
+
+		// Delete OTP record after successful registration
+		await OTP.deleteOne({ _id: verifiedOtp._id });
 
 
 		await HostEarning.create({
@@ -388,6 +405,7 @@ export const verifyOtp = async (req, res) => {
 			})
 		}
 
+		findOtp.isVerified = true;
 		findOtp.isValid = false;
 		await findOtp.save()
 		return res.status(200).json({
@@ -600,10 +618,16 @@ export const hostLogin = async (req, res) => {
 
 export const hostLogout = async (req, res) => {
 	try {
-		const hostId = host.req.id;
+		const hostId = req.hostInfo?.id;
 
-
-
+		if (!hostId) {
+			return res.status(401).json({
+				statusCode: 401,
+				message: "Access denied. Not authorized.",
+				data: null,
+				error: null
+			});
+		}
 
 		const host = await Host.findOne({
 			_id: hostId
@@ -628,10 +652,10 @@ export const hostLogout = async (req, res) => {
 
 		return res.status(200).json({
 			statusCode: 200,
-			data: findAccount,
+			data: host,
 			message: "Host Logged out successfully",
 			error: null,
-			requestId: req.locals.id
+			requestId: req.locals?.id
 		});
 
 
@@ -741,6 +765,7 @@ export const verifyOtpForgotPassword = async (req, res) => {
 			})
 		}
 
+		findOtp.isVerified = true;
 		findOtp.isValid = false;
 		await findOtp.save()
 		return res.status(200).json({
@@ -801,12 +826,29 @@ export const resetForgotPassword = async (req, res) => {
 		}
 
 
+		// Enforce OTP verification check before resetting password
+		const verifiedOtp = await OTP.findOne({
+			email: email,
+			isVerified: true
+		});
+
+		if (!verifiedOtp) {
+			return res.status(400).json({
+				statusCode: 400,
+				message: "Email verification required. Please verify OTP first.",
+				data: null,
+				error: null
+			});
+		}
+
 		const salt = await bcrypt.genSalt(10);
 		const hashedPassword = await bcrypt.hash(password, salt);
 
 		findEmail.password = hashedPassword;
 		await findEmail.save();
 
+		// Delete the OTP document after successful password reset
+		await OTP.deleteOne({ _id: verifiedOtp._id });
 
 		return res.status(200).json({
 			statusCode: 200,

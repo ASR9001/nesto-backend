@@ -1,5 +1,5 @@
 import express from 'express';
-import {  fetchHostEarning, fetchNotification, generateUploadURLForHost, generateUploadURLForHostCloudinary, getHostBankDetails, getHostWithdrawalHistory, saveHostBankDetails } from '../controllers/hostController.js';
+import {  fetchHostEarning, fetchNotification, generateUploadURLForHost, generateUploadURLForHostCloudinary, getHostBankDetails, getHostWithdrawalHistory, saveHostBankDetails, updateFcmToken } from '../controllers/hostController.js';
 import { cancelBookingByHost, getAllHostBooking, getHome } from '../controllers/bookingController.js';
 import { hostVerifyToken } from '../middleware/hostVerifyToken.js';
 import { createProperty, disableProperty, getAllPropertiesForHost, getHostPropertyById, updateProperty } from '../controllers/propertyController.js';
@@ -30,6 +30,7 @@ router.post('/send-message', hostVerifyToken , sendMessageByHost)
 
 router.get('/fetch-profile',hostVerifyToken , fetchProfile); 
 router.post('/update-profile',hostVerifyToken , updateProfile); 
+router.post('/update-fcm-token', hostVerifyToken, updateFcmToken);
 
 
 router.post('/booking/cancel-booking', hostVerifyToken, cancelBookingByHost)

@@ -606,29 +606,29 @@ export const setupSocketHandlers = (io) => {
 
 					//end using ai abhishek
 
-					const [fetchCreatorDetails] = await Promise.all([
-						Creator.findByIdAndUpdate(
-							creatorId,
-							{
-								$set: {
-									is_creator_on_screen: false,
-									is_influencer_on_special_call: false,
-									is_influencer_on_screen_with_special_call: false,
-								},
-							},
-							{ new: true }
-						),
-						creatorOnlineStatus.updateOne(
-							{ creator_id: creatorId },
-							{ $set: { is_connected: false, lastSeen: new Date() } }
-						),
-						chatConnectivity.updateMany(
-							{ creator_id: creatorId },
-							{ $set: { is_creator_on_chat_window: false } }
-						),
-					]);
+					// const [fetchCreatorDetails] = await Promise.all([
+					// 	Creator.findByIdAndUpdate(
+					// 		creatorId,
+					// 		{
+					// 			$set: {
+					// 				is_creator_on_screen: false,
+					// 				is_influencer_on_special_call: false,
+					// 				is_influencer_on_screen_with_special_call: false,
+					// 			},
+					// 		},
+					// 		{ new: true }
+					// 	),
+					// 	creatorOnlineStatus.updateOne(
+					// 		{ creator_id: creatorId },
+					// 		{ $set: { is_connected: false, lastSeen: new Date() } }
+					// 	),
+					// 	chatConnectivity.updateMany(
+					// 		{ creator_id: creatorId },
+					// 		{ $set: { is_creator_on_chat_window: false } }
+					// 	),
+					// ]);
 
-					if (!fetchCreatorDetails) return;
+					// if (!fetchCreatorDetails) return;
 
 					//   if (fetchCreatorDetails.creator_status === "ai_mode") {
 					//     io.to(`${creatorId}_users`).emit("creator_status", {
@@ -659,192 +659,6 @@ export const setupSocketHandlers = (io) => {
 						}
 					}
 
-					//end using ai abhishek
-
-					await chatConnectivity.updateMany(
-						{ user_id: userId },
-						{ $set: { is_user_on_chat_window: false } }
-					);
-
-					// ── 1. Handle WAITING call (missed) ─────────────────────────────
-					const waitingCall = await VideoConnectivty.findOne({
-						user_id: userId,
-						connection: "waiting",
-					}).sort({ createdAt: -1 });
-
-					if (waitingCall) {
-						const creatorDetails = await Creator.findById(waitingCall.creator_id);
-
-						if (creatorDetails) {
-							const creatorStatus = await creatorOnlineStatus.findOne({
-								creator_id: creatorDetails._id,
-							});
-
-							if (creatorStatus) {
-								creatorStatus.isVideoCallNotificationSent = false;
-								await creatorStatus.save();
-							}
-
-							const type = waitingCall.plan_id
-								? "VIDEO_CALL_PREMIUM"
-								: "VIDEO_CALL_DIRECT";
-
-							const notifyPromises = [];
-							if (creatorDetails.ios_device_id) {
-								notifyPromises.push(
-									send_notification_to_creator_for_ios_call_declined_by_user(
-										creatorDetails,
-										waitingCall,
-										type
-									)
-								);
-							}
-							if (creatorDetails.pushy_device_id) {
-								notifyPromises.push(
-									send_notification_to_creator_for_call_declined_by_user(
-										creatorDetails,
-										waitingCall,
-										type
-									)
-								);
-							}
-							await Promise.allSettled(notifyPromises);
-
-							await VideoConnectivty.updateMany(
-								{ user_id: userId, connection: "waiting" },
-								{
-									$set: {
-										connection: "missed",
-										declined_by: "user",
-										is_processed: true,
-									},
-								}
-							);
-						}
-					}
-
-					// ── 2. Handle ONGOING call (end + deduct tokens) ─────────────────
-					const ongoingCall = await VideoConnectivty.findOne({
-						user_id: userId,
-						connection: "ongoing",
-					}).sort({ createdAt: -1 });
-
-					if (!ongoingCall) return;
-
-					// Guard: already processed
-					if (ongoingCall.is_processed) return;
-
-					// Mark processed immediately to prevent double-processing
-					const locked = await VideoConnectivty.findOneAndUpdate(
-						{ _id: ongoingCall._id, is_processed: false },
-						{ $set: { is_processed: true } },
-						{ new: true }
-					);
-					if (!locked) return; // Another process already handled it
-
-					const creatorDetails = await Creator.findById(ongoingCall.creator_id);
-					if (!creatorDetails) return;
-
-					const creatorStatus = await creatorOnlineStatus.findOne({
-						creator_id: ongoingCall.creator_id,
-					});
-					if (creatorStatus) {
-						creatorStatus.isVideoCallNotificationSent = false;
-						await creatorStatus.save();
-					}
-
-					// No start_time → mark missed
-					if (!ongoingCall.start_time) {
-						ongoingCall.connection = "missed";
-						ongoingCall.declined_by = null;
-						await ongoingCall.save();
-						return;
-					}
-
-					const userDetails = await User.findById(ongoingCall.user_id);
-					if (!userDetails) return;
-
-					const userWalletDetails = await Wallet.findOne({
-						user_id: ongoingCall.user_id,
-					});
-					if (!userWalletDetails) return;
-
-					// Duration calculation
-					const startTime = new Date(ongoingCall.start_time);
-					const endTime = new Date();
-					const duration = moment.duration(moment(endTime).diff(moment(startTime)));
-					const totalSeconds = customRound(duration.asSeconds());
-					const minutes = Math.floor(totalSeconds / 60);
-					const remainingSeconds = customRound(totalSeconds % 60);
-					const durationInMinutes = `${String(minutes).padStart(2, "0")}:${String(remainingSeconds).padStart(2, "0")}`;
-
-					const declineBy =
-						ongoingCall.schedule_time >= duration.asMilliseconds()
-							? ongoingCall.declined_by ?? "user"
-							: null;
-
-					ongoingCall.end_time = endTime;
-					ongoingCall.connection = "complete";
-					ongoingCall.declined_by = declineBy;
-					ongoingCall.duration = durationInMinutes;
-					await ongoingCall.save();
-
-					const formattedStartTime = await formatDateTime(startTime);
-					const formattedEndTime = await formatDateTime(endTime);
-
-					const userWalletHistoryDocument = await userWalletHistory.findOne({
-						serviceId: ongoingCall._id,
-					});
-
-					const callType = ongoingCall.plan_id // ← schema mein add karna hoga agar nahi hai
-						? "VIDEO_CALL_PREMIUM"
-						: ongoingCall.plan_id
-							? "VIDEO_CALL_PREMIUM"
-							: "VIDEO_CALL_DIRECT";
-
-					const deductedBalance = await deductToken(
-						{
-							userId: userDetails.id,
-							creatorId: creatorDetails.email,
-							creator_Id: creatorDetails._id,
-							creatorName: `${creatorDetails.first_name} ${creatorDetails.last_name}`,
-							userName: `${userDetails.first_name} ${userDetails.last_name}`,
-							videoId: ongoingCall._id,
-							userWalletHistoryId: userWalletHistoryDocument?._id,
-						},
-						callType,
-						totalSeconds,
-						ongoingCall.plan_id,
-						ongoingCall.plan_id ?? false
-					);
-
-					// Emit final events to user's socket (may already be gone, but emit anyway)
-					io.to(socket.id).emit("callEndTimeSaved", {
-						message: `End Time ${formattedEndTime} added to the call`,
-						call_started: formattedStartTime,
-						call_ended: formattedEndTime,
-						call_duration: durationInMinutes,
-						amount_deducted: userWalletDetails.wallet_balance - deductedBalance.data,
-						id: uuidv(),
-					});
-
-					io.to(socket.id).emit("call_logs", {
-						type: callType,
-						message: `Video Call : ${durationInMinutes}`,
-						call_started: formattedStartTime,
-						call_ended: formattedEndTime,
-						call_duration: durationInMinutes,
-						prev_wallet_balance: userWalletDetails.wallet_balance,
-						deducted_balance: deductedBalance,
-						amount_deducted: userWalletDetails.wallet_balance - deductedBalance.data,
-						id: uuidv(),
-					});
-
-					io.to(socket.id).emit("fetchedUserToken", {
-						message: "User Token Fetched Successfully",
-						wallet_balance: deductedBalance.data,
-						id: uuidv(),
-					});
 				}
 			} catch (error) {
 				const socketCreator = socket?.creator ?? {};

@@ -19,6 +19,10 @@ const OTPSchema = new Schema({
     type: Boolean,
     default: true,
   },
+  isVerified: {
+    type: Boolean,
+    default: false,
+  },
   count : {
     type : Number,
     default : 1

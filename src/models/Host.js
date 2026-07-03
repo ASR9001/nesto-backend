@@ -8,7 +8,10 @@ const hostSchema = new Schema(
         
         email: {
             type: String,
-            required:true
+            required: true,
+            unique: true,
+            trim: true,
+            lowercase: true
         },
         firstName: {
             type: String,

@@ -7,59 +7,65 @@ export const hostVerifyToken = async (req, res, next) => {
   try {
     const bearerHeader = req.headers["authorization"];
     if (!bearerHeader) {
-      return res.send({
-        statusCode: 400,
+      return res.status(401).json({
+        statusCode: 401,
         data: null,
-        message: "Access denied.You are not authorised.",
+        message: "Access denied. You are not authorised.",
         error: "Access denied.",
       });
     }
-    // console.log("my header", req.headers)
-    const token = bearerHeader.split(" ")[1];
-    if (!token)
-      return res.send({
+
+    const parts = bearerHeader.split(" ");
+    if (parts.length !== 2 || parts[0] !== "Bearer") {
+      return res.status(401).json({
         statusCode: 401,
         data: null,
-        message: "Access denied.",
+        message: "Malformed token format. Must be Bearer <token>",
+        error: "Malformed Token",
+      });
+    }
+
+    const token = parts[1];
+    if (!token) {
+      return res.status(401).json({
+        statusCode: 401,
+        data: null,
+        message: "Access denied. Token is missing.",
         error: "Access denied.",
       });
-    const verified = await jwt.verify(token, process.env.USER_SECRET_KEY);
-    if (verified) {
+    }
 
-      const user = await Host.findOne({
-        email: verified.email
-      })
+    const verified = jwt.verify(token, process.env.USER_SECRET_KEY);
+    if (verified) {
+      const user = await Host.findOne({ email: verified.email });
       if (!user) {
-        return res.send({
+        return res.status(400).json({
           statusCode: 400,
           data: null,
           message: "Invalid email",
           error: "Invalid email",
         });
       }
-    
 
       req.hostInfo = {
         id: user.id,
-        // email : get_user_id_from_hash_mapper.email,
         role: verified.role,
         iat: verified.iat
-      }
+      };
     } else {
-      return res.send({
+      return res.status(401).json({
         statusCode: 401,
         data: null,
         message: "Access denied.",
         error: "Access denied.",
       });
     }
-  }
-  catch (error) {
-    return res.send({
+  } catch (error) {
+    return res.status(400).json({
       statusCode: 400,
       data: null,
       message: error.message || "Access denied.",
-      error: error
+      error: "Access denied.",
     });
   }
   next();
