@@ -116,7 +116,7 @@ export const getUserBookings = async (req, res, next) => {
 
 
 
-    const baseUrl = process.env.PUBLIC_CLOUDINARY_BASE_URL;
+    const baseUrl = process.env.AWS_S3_CLOUDFRONT_BASE_URL;
     const extension = process.env.PUBLIC_CLOUDINARY_IMAGE_EXTENSION;
 
     const updatedBookings = bookings.map(group => {

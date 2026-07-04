@@ -184,7 +184,7 @@ export const getDetails = async (req, res, next) => {
                 ? user.profile_image
                 : "https://randomuser.me/api/portraits/women/67.jpg";
             // const userCloudfrontUrl = user.profile_image
-            //     ? `${process.env.PUBLIC_CLOUDINARY_BASE_URL}/${user.profile_image}${process.env.PUBLIC_CLOUDINARY_IMAGE_EXTENSION}`
+            //     ? `${process.env.AWS_S3_CLOUDFRONT_BASE_URL}/${user.profile_image}`
             //     : "https://randomuser.me/api/portraits/women/67.jpg";
 
 

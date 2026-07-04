@@ -18,6 +18,7 @@ export const generateUploadFileUrl = async (path) => {
 			Bucket: bucketName,
 			Key: path,
 			ContentType: "application/octet-stream",
+			CacheControl: "public, max-age=31536000, immutable",
 		});
 		const url = await getSignedUrl(s3, command, { expiresIn: 60 });
 		return url;
@@ -80,6 +81,7 @@ export const uploadToS3 = async (file, userId, propertyId) => {
 			Key: s3Path,
 			Body: compressedBuffer,
 			ContentType: "image/jpeg",
+			CacheControl: "public, max-age=31536000, immutable",
 		});
 
 		await s3.send(command);

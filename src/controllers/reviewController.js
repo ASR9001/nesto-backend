@@ -126,7 +126,7 @@ export const fetchPropertyReviews = async (req, res, next) => {
 
       if (pic && !pic.startsWith('http://') && !pic.startsWith('https://')) {
         // Append Cloudinary URL only if not an external URL
-        review.userProfilePic = `${process.env.PUBLIC_CLOUDINARY_BASE_URL}/${pic}${process.env.PUBLIC_CLOUDINARY_IMAGE_EXTENSION}`;
+        review.userProfilePic = `${process.env.AWS_S3_CLOUDFRONT_BASE_URL}/${pic}`;
       }
 
       return review;
@@ -283,7 +283,7 @@ export const propertySearch = async (req, res, next) => {
       const { images, ...rest } = item;
 
       const contentWithUrl = images.map((imagePath) => {
-        const cloudfrontUrl = `${process.env.PUBLIC_CLOUDINARY_BASE_URL}/${imagePath}${process.env.PUBLIC_CLOUDINARY_IMAGE_EXTENSION}`;
+        const cloudfrontUrl = `${process.env.AWS_S3_CLOUDFRONT_BASE_URL}/${imagePath}`;
         return cloudfrontUrl;
       });
 

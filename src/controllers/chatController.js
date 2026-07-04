@@ -4,7 +4,6 @@ import { generateSignedCloudfrontUrl } from "../services/utilities/s3.js";
 import { ObjectId } from 'mongodb';
 import Message from "../models/Message.js";
 import Host from "../models/Host.js";
-import { uploadToCloudinary } from "../services/utilities/cloudinary.js";
 import Property from "../models/Property.js";
 import axios from "axios";
 import { io } from '../config/socket.js';
@@ -214,7 +213,7 @@ export const fetchSingleChat = async (req, res, next) => {
     const contentWithUrl = titleData.map(chat => {
       // Generate Cloudinary URL or fallback if no profile image exists
       const hostCloudfrontUrl = chat.hostProfilePic
-        ? `${process.env.PUBLIC_CLOUDINARY_BASE_URL}/${chat.hostProfilePic}${process.env.PUBLIC_CLOUDINARY_IMAGE_EXTENSION}`
+        ? `${process.env.AWS_S3_CLOUDFRONT_BASE_URL}/${chat.hostProfilePic}`
         : "https://randomuser.me/api/portraits/women/67.jpg";
 
 
@@ -385,11 +384,11 @@ export const fetchAllChatForUser = async (req, res, next) => {
     const contentWithUrl = fetchChat.map(chat => {
       // Generate Cloudinary URL or fallback if no profile image exists
       const hostCloudfrontUrl = chat.hostProfilePic
-        ? `${process.env.PUBLIC_CLOUDINARY_BASE_URL}/${chat.hostProfilePic}${process.env.PUBLIC_CLOUDINARY_IMAGE_EXTENSION}`
+        ? `${process.env.AWS_S3_CLOUDFRONT_BASE_URL}/${chat.hostProfilePic}`
         : "https://randomuser.me/api/portraits/women/67.jpg";
 
       const propertyCloudfrontUrl = chat.propertyImage
-        ? `${process.env.PUBLIC_CLOUDINARY_BASE_URL}/${chat.propertyImage}${process.env.PUBLIC_CLOUDINARY_IMAGE_EXTENSION}`
+        ? `${process.env.AWS_S3_CLOUDFRONT_BASE_URL}/${chat.propertyImage}`
         : "https://randomuser.me/api/portraits/women/67.jpg";
 
       // Return full chat object with image URL

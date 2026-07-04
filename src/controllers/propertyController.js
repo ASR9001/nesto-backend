@@ -369,7 +369,7 @@ export const getFeaturedProperty = async (req, res, next) => {
 
       for (const imagePath of images) {
         // const cloudfrontUrl = await generateSignedCloudfrontUrl(imagePath, expiryTime); // Generate signed URL
-        const cloudfrontUrl = `${process.env.PUBLIC_CLOUDINARY_BASE_URL}/${imagePath}${process.env.PUBLIC_CLOUDINARY_IMAGE_EXTENSION}`
+        const cloudfrontUrl = `${process.env.AWS_S3_CLOUDFRONT_BASE_URL}/${imagePath}`
 
         contentWithUrl.push(cloudfrontUrl);
       }
@@ -829,7 +829,7 @@ export const getFeaturedProperty = async (req, res, next) => {
 
 //       for (const imagePath of images) {
 //         // const cloudfrontUrl = await generateSignedCloudfrontUrl(imagePath, expiryTime); // Generate signed URL
-//         const cloudfrontUrl = `${process.env.PUBLIC_CLOUDINARY_BASE_URL}/${imagePath}${process.env.PUBLIC_CLOUDINARY_IMAGE_EXTENSION}`
+//         const cloudfrontUrl = `${process.env.AWS_S3_CLOUDFRONT_BASE_URL}/${imagePath}`
 
 //         contentWithUrl.push(cloudfrontUrl);
 //       }
@@ -840,7 +840,7 @@ export const getFeaturedProperty = async (req, res, next) => {
 //         ...rest,
 //         images: contentWithUrl,
 
-//         hostProfilePic: `${process.env.PUBLIC_CLOUDINARY_BASE_URL}/${hostProfilePic}${process.env.PUBLIC_CLOUDINARY_IMAGE_EXTENSION}`
+//         hostProfilePic: `${process.env.AWS_S3_CLOUDFRONT_BASE_URL}/${hostProfilePic}`
 //       });
 //     }
 
@@ -1186,12 +1186,12 @@ export const getPropertyById = async (req, res, next) => {
       // Handle images
       const contentWithUrl = [];
       for (const imagePath of images) {
-        const cloudfrontUrl = `${process.env.PUBLIC_CLOUDINARY_BASE_URL}/${imagePath}${process.env.PUBLIC_CLOUDINARY_IMAGE_EXTENSION}`;
+        const cloudfrontUrl = `${process.env.AWS_S3_CLOUDFRONT_BASE_URL}/${imagePath}`;
         contentWithUrl.push(cloudfrontUrl);
       }
 
       // Handle host profile picture URL
-      const hostProfilePicUrl = `${process.env.PUBLIC_CLOUDINARY_BASE_URL}/${hostProfilePic}${process.env.PUBLIC_CLOUDINARY_IMAGE_EXTENSION}`;
+      const hostProfilePicUrl = `${process.env.AWS_S3_CLOUDFRONT_BASE_URL}/${hostProfilePic}`;
      
      
      
@@ -1202,7 +1202,7 @@ export const getPropertyById = async (req, res, next) => {
 
           if (pic && !pic.startsWith('http://') && !pic.startsWith('https://')) {
             // Append Cloudinary URL only if not an external URL
-            review.userProfilePic = `${process.env.PUBLIC_CLOUDINARY_BASE_URL}/${pic}${process.env.PUBLIC_CLOUDINARY_IMAGE_EXTENSION}`;
+            review.userProfilePic = `${process.env.AWS_S3_CLOUDFRONT_BASE_URL}/${pic}`;
           }
         }
       }
