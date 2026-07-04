@@ -67,7 +67,7 @@ export const uploadToS3 = async (file, userId, propertyId) => {
 			.toBuffer();
 
 		let sizeInMB = compressedBuffer.length / (1024 * 1024);
-		if (sizeInMB > 2) {
+		if (sizeInMB > 4) {
 			compressedBuffer = await sharp(compressedBuffer)
 				.jpeg({ quality: 60 })
 				.toBuffer();

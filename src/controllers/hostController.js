@@ -10,12 +10,16 @@ import hostBankDetail from "../models/HostBankDetail.js";
 
 export const generateUploadURLForHost = async (req, res, next) => {
   try {
-    const { content } = req.body;
-    const hostId = "6824d7db36c60dec26e7c38b";
+    const { content, hostId, type } = req.body;
+    const activeHostId = hostId ;
     const uploadResponse = [];
 
-    // let s3Folder = `public/room/${hostId}/images`;
-    let s3Folder = `public/yourid/images`;
+    let s3Folder = `public/${activeHostId}/room`;
+    if (type === 'profileImage') {
+      s3Folder = `public/${activeHostId}/profile`;
+    } else if (type === 'chatImage') {
+      s3Folder = `public/${activeHostId}/chat`;
+    }
 
     if (content?.files?.length > 0) {
       for (const item of content.files) {
