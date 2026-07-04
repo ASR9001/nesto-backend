@@ -882,7 +882,7 @@ export const sendMessage = async (req, res, next) => {
 
     let imageUrl = '';
     if (req.file) {
-      imageUrl = await uploadToCloudinary(req.file, userId, propertyId); // expects file buffer
+      imageUrl = await uploadToS3(req.file, userId, propertyId);
     }
 
 

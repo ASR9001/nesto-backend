@@ -15,7 +15,7 @@ export const generateUploadURLForHost = async (req, res, next) => {
     const uploadResponse = [];
 
     // let s3Folder = `public/room/${hostId}/images`;
-    let s3Folder = `public/myid/images`;
+    let s3Folder = `public/yourid/images`;
 
     if (content?.files?.length > 0) {
       for (const item of content.files) {
