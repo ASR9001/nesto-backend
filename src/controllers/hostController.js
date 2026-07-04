@@ -8,7 +8,7 @@ import { ObjectId } from 'mongodb';
 import { HostWithdrawHistory } from "../models/HostWithdrawHistory.js";
 import hostBankDetail from "../models/HostBankDetail.js";
 
-export const generateUploadURLForHost = async (req, res) => {
+export const generateUploadURLForHost = async (req, res, next) => {
   try {
     const { content } = req.body;
     const hostId = "6824d7db36c60dec26e7c38b";
@@ -34,18 +34,15 @@ export const generateUploadURLForHost = async (req, res) => {
       error: null,
     });
   } catch (error) {
-    return res.status(500).json({
-      statusCode: 500,
-      data: null,
-      message: error.message,
-      error,
-    });
-  }
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 };
 
 
 
-export const generateUploadURLForHostCloudinary = async (req, res) => {
+export const generateUploadURLForHostCloudinary = async (req, res, next) => {
   try {
     const { folder } = req.body;
     const cleanFolder = folder.replace(/[^a-zA-Z0-9\-\/]/g, '');
@@ -69,18 +66,14 @@ export const generateUploadURLForHostCloudinary = async (req, res) => {
 
 
   } catch (error) {
-    console.log("error cloudinary upload", error)
-    return res.status(500).json({
-      statusCode: 500,
-      data: null,
-      message: error.message,
-      error: error,
-    });
-  }
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 };
 
 
-export const fetchHostEarning = async (req, res) => {
+export const fetchHostEarning = async (req, res, next) => {
   try {
     const hostId = req.hostInfo.id;
 
@@ -107,19 +100,15 @@ export const fetchHostEarning = async (req, res) => {
     });
 
   } catch (error) {
-    console.log("error fetch earning", error)
-    return res.status(500).json({
-      statusCode: 500,
-      data: null,
-      message: error.message,
-      error: null,
-    });
-  }
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 }
 
 
 
-export const fetchNotification = async (req, res) => {
+export const fetchNotification = async (req, res, next) => {
   try {
     const hostId = req.hostInfo.id;
     // const objHostId = new ObjectId(
@@ -188,19 +177,15 @@ export const fetchNotification = async (req, res) => {
     })
 
   } catch (error) {
-    console.log("first", error)
-    return res.status(500).json({
-      statusCode: 500,
-      message: error.message,
-      data: null,
-      error: error
-    })
-  }
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 }
 
 
 
-export const getHostProfile = async (req, res) => {
+export const getHostProfile = async (req, res, next) => {
   try {
     const hostId = req.hostInfo.id;
 
@@ -297,18 +282,14 @@ export const getHostProfile = async (req, res) => {
     // )
 
   } catch (error) {
-    console.log("error", error)
-    return res.status(500).json({
-      statusCode: 500,
-      data: null,
-      message: error.message,
-      error: error,
-    });
-  }
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 }
 
 
-export const getHostWithdrawalHistory = async (req, res) => {
+export const getHostWithdrawalHistory = async (req, res, next) => {
   try {
 
     const hostId = req.hostInfo.id;
@@ -336,13 +317,10 @@ export const getHostWithdrawalHistory = async (req, res) => {
 
 
   } catch (error) {
-    return res.status(500).json({
-      statusCode: 500,
-      data: null,
-      message: error.message,
-      error: error,
-    });
-  }
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 }
 
 
@@ -393,7 +371,7 @@ export const getHostWithdrawalHistory = async (req, res) => {
 // }
 
 
-export const saveHostBankDetails = async (req, res) => {
+export const saveHostBankDetails = async (req, res, next) => {
   try {
     const hostId = req.hostInfo.id;
     const { accountHolderName, accountNumber, bankName, ifscCode, upiId } = req.body;
@@ -478,19 +456,16 @@ export const saveHostBankDetails = async (req, res) => {
     }
 
   } catch (error) {
-    return res.status(500).json({
-      statusCode: 500,
-      data: null,
-      message: error.message,
-      error: error,
-    });
-  }
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 };
 
 
 
 
-export const getHostBankDetails = async (req, res) => {
+export const getHostBankDetails = async (req, res, next) => {
   try {
 
     const hostId = req.hostInfo.id;
@@ -520,16 +495,13 @@ export const getHostBankDetails = async (req, res) => {
 
 
   } catch (error) {
-    return res.status(500).json({
-      statusCode: 500,
-      data: null,
-      message: error.message,
-      error: error,
-    });
-  }
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 }
 
-export const updateFcmToken = async (req, res) => {
+export const updateFcmToken = async (req, res, next) => {
   try {
     const hostId = req.hostInfo?.id;
     const { fcmToken } = req.body;
@@ -582,12 +554,9 @@ export const updateFcmToken = async (req, res) => {
       error: null,
     });
   } catch (error) {
-    return res.status(500).json({
-      statusCode: 500,
-      data: null,
-      message: error.message,
-      error: error,
-    });
-  }
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 };
 

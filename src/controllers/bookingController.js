@@ -7,7 +7,7 @@ import BaseRates from '../models/BaseRate.js';
 import Transaction from '../models/Transaction.js';
 
 //not in use abhishek
-export const createBooking = async (req, res) => {
+export const createBooking = async (req, res, next) => {
   const userId = req.user._id; // from auth middleware
   const { propertyId, checkIn, checkOut, guests, totalPrice } = req.body;
 
@@ -39,14 +39,15 @@ export const createBooking = async (req, res) => {
     res.status(201).json(booking);
 
   } catch (error) {
-    console.error('Booking error:', error);
-    res.status(500).json({ message: 'Error creating booking' });
-  }
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 };
 
 
 
-export const getUserBookings = async (req, res) => {
+export const getUserBookings = async (req, res, next) => {
   try {
     const userId = req.user.id;
 
@@ -142,19 +143,15 @@ export const getUserBookings = async (req, res) => {
       error: null
     })
   } catch (error) {
-    console.error('Error fetching bookings:', error);
-    return res.status(500).json({
-      statusCode: 500,
-      message: error.message,
-      data: null,
-      error: error
-    })
-  }
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 };
 
 
 
-export const cancelBooking = async (req, res) => {
+export const cancelBooking = async (req, res, next) => {
   try {
 
     const { bookingId } = req.body;
@@ -245,20 +242,15 @@ export const cancelBooking = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error cancelling booking:', error);
-
-    return res.status(500).json({
-      statusCode: 500,
-      message: 'Failed to cancel booking',
-      data: null,
-      error: error
-    });
-  }
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 };
 
 
 
-export const getAllBookings = async (req, res) => {
+export const getAllBookings = async (req, res, next) => {
   try {
     const bookings = await Booking.find()
       .populate('user', 'name email')
@@ -266,14 +258,15 @@ export const getAllBookings = async (req, res) => {
 
     res.status(200).json(bookings);
   } catch (error) {
-    console.error('Error fetching all bookings:', error);
-    res.status(500).json({ message: 'Failed to fetch bookings' });
-  }
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 };
 
 
 
-export const updateBookingStatus = async (req, res) => {
+export const updateBookingStatus = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
@@ -289,12 +282,13 @@ export const updateBookingStatus = async (req, res) => {
 
     res.status(200).json({ message: 'Booking status updated', booking });
   } catch (error) {
-    console.error('Error updating booking status:', error);
-    res.status(500).json({ message: 'Failed to update booking status' });
-  }
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 };
 
-export const getAllHostBooking = async (req, res) => {
+export const getAllHostBooking = async (req, res, next) => {
   try {
     const hostId = req.hostInfo.id
     const fetchBooking = await Booking.aggregate(
@@ -410,17 +404,14 @@ export const getAllHostBooking = async (req, res) => {
 
 
   } catch (error) {
-    return res.status(500).json({
-      statusCode: 500,
-      message: error.message,
-      data: null,
-      error: error
-    })
-  }
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 }
 
 
-export const getHome = async (req, res) => {
+export const getHome = async (req, res, next) => {
   try {
     const hostId = req.hostInfo.id
     const fetchBooking = await Booking.aggregate(
@@ -575,19 +566,16 @@ export const getHome = async (req, res) => {
 
 
   } catch (error) {
-    return res.status(500).json({
-      statusCode: 500,
-      message: error.message,
-      data: null,
-      error: error
-    })
-  }
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 }
 
 
 
 //working user controller
-export const fetchBookingCharges = async (req, res) => {
+export const fetchBookingCharges = async (req, res, next) => {
   try {
 
     const { propertyId, nights, guests } = req.body;
@@ -684,18 +672,15 @@ export const fetchBookingCharges = async (req, res) => {
 
 
   } catch (error) {
-    return res.status(500).json({
-      statusCode: 500,
-      message: error.message,
-      data: null,
-      error: error
-    })
-  }
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 }
 
 
 
-export const fetchTransaction = async (req, res) => {
+export const fetchTransaction = async (req, res, next) => {
   try {
 
 
@@ -774,19 +759,16 @@ export const fetchTransaction = async (req, res) => {
 
 
   } catch (error) {
-    return res.status(500).json({
-      statusCode: 500,
-      message: error.message,
-      data: null,
-      error: error
-    })
-  }
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 }
 
 
 
 
-export const cancelBookingByHost = async (req, res) => {
+export const cancelBookingByHost = async (req, res, next) => {
   try {
 
     const { bookingId , reason} = req.body;
@@ -886,13 +868,8 @@ export const cancelBookingByHost = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error cancelling booking:', error);
-
-    return res.status(500).json({
-      statusCode: 500,
-      message: 'Failed to cancel booking',
-      data: null,
-      error: error
-    });
-  }
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 };

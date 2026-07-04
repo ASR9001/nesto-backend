@@ -131,7 +131,7 @@ import { io } from '../config/socket.js';
 // }
 
 
-export const fetchSingleChat = async (req, res) => {
+export const fetchSingleChat = async (req, res, next) => {
   try {
 
     const { propertyId } = req.body;
@@ -248,18 +248,15 @@ export const fetchSingleChat = async (req, res) => {
 
 
   } catch (error) {
-    return res.status(500).json({
-      statusCode: 500,
-      data: null,
-      message: null,
-      error: error.message,
-    })
-  }
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 }
 
 
 
-export const fetchAllChatForUser = async (req, res) => {
+export const fetchAllChatForUser = async (req, res, next) => {
   try {
     const userId = req.user.id;
 
@@ -418,19 +415,15 @@ export const fetchAllChatForUser = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error fetching chats:', error); // Improved logging for debugging
-    return res.status(500).json({
-      statusCode: 500,
-      data: null,
-      message: null,
-      error: error.message || 'Internal server error.',
-    });
-  }
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 };
 
 
 
-export const fetchAllChatForHost = async (req, res) => {
+export const fetchAllChatForHost = async (req, res, next) => {
   try {
     const hostId = req.hostInfo.id; // Get host info from the request
 
@@ -599,19 +592,15 @@ export const fetchAllChatForHost = async (req, res) => {
       error: null,
     });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({
-      statusCode: 500,
-      data: null,
-      message: "Failed to fetch chats.",
-      error: error.message,
-    });
-  }
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 };
 
 
 
-export const getChatForHost = async (req, res) => {
+export const getChatForHost = async (req, res, next) => {
   try {
     const hostId = req.hostInfo.id; // Get host info from the request
 
@@ -693,18 +682,14 @@ export const getChatForHost = async (req, res) => {
       error: null,
     });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({
-      statusCode: 500,
-      data: null,
-      message: "Failed to fetch chats.",
-      error: error.message,
-    });
-  }
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 };
 
 
-export const sendMessageByHost = async (req, res) => {
+export const sendMessageByHost = async (req, res, next) => {
   try {
 
 
@@ -749,18 +734,15 @@ export const sendMessageByHost = async (req, res) => {
     });
 
   } catch (error) {
-    return res.status(500).json({
-      statusCode: 500,
-      data: null,
-      message: null,
-      error: error.message,
-    });
-  }
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 };
 
 
 
-export const fetchProfile = async (req, res) => {
+export const fetchProfile = async (req, res, next) => {
   try {
 
     const hostId = req.hostInfo.id;
@@ -788,17 +770,14 @@ export const fetchProfile = async (req, res) => {
 
 
   } catch (error) {
-    return res.status(500).json({
-      statusCode: 500,
-      data: null,
-      message: null,
-      error: error.message,
-    })
-  }
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 }
 
 
-export const updateProfile = async (req, res) => {
+export const updateProfile = async (req, res, next) => {
   try {
 
 
@@ -844,19 +823,16 @@ export const updateProfile = async (req, res) => {
 
 
   } catch (error) {
-    return res.status(500).json({
-      statusCode: 500,
-      data: null,
-      message: null,
-      error: error.message,
-    })
-  }
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 }
 
 
 
 
-export const sendMessage = async (req, res) => {
+export const sendMessage = async (req, res, next) => {
   try {
     const {
       messageText,
@@ -975,11 +951,8 @@ export const sendMessage = async (req, res) => {
     });
 
   } catch (error) {
-    return res.status(500).json({
-      statusCode: 500,
-      data: null,
-      message: error.message,
-      error: error,
-    });
-  }
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 };

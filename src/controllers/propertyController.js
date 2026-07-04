@@ -3,7 +3,7 @@ import { ObjectId } from 'mongodb';
 import { generateSignedCloudfrontUrl } from '../services/utilities/s3.js';
 
 
-export const createProperty = async (req, res) => {
+export const createProperty = async (req, res, next) => {
   try {
     const { data } = req.body;
     const hostId = req.hostInfo.id
@@ -63,14 +63,15 @@ export const createProperty = async (req, res) => {
 
 
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Error creating property' });
-  }
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 };
 
 
 
-export const disableProperty = async (req, res) => {
+export const disableProperty = async (req, res, next) => {
   try {
     const { id } = req.body;
     const hostId = req.hostInfo.id
@@ -113,9 +114,10 @@ export const disableProperty = async (req, res) => {
 
 
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Error creating property' });
-  }
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 };
 
 
@@ -177,7 +179,7 @@ export const disableProperty = async (req, res) => {
 // };
 
 
-export const getAllPropertiesForUser = async (req, res) => {
+export const getAllPropertiesForUser = async (req, res, next) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
@@ -227,12 +229,13 @@ export const getAllPropertiesForUser = async (req, res) => {
       properties: properties, // Send updated content (with signed URLs)
     });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: 'Error fetching properties' });
-  }
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 };
 
-export const getAllPropertiesForHost = async (req, res) => {
+export const getAllPropertiesForHost = async (req, res, next) => {
   try {
     const hostId = req.hostInfo.id;
 
@@ -266,18 +269,14 @@ export const getAllPropertiesForHost = async (req, res) => {
       error: null
     });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({
-      statusCode: 500,
-      data: null,
-      message: error.message,
-      error: error
-    });
-  }
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 };
 
 
-export const getFeaturedProperty = async (req, res) => {
+export const getFeaturedProperty = async (req, res, next) => {
   try {
 
     const expiryTime = new Date(Date.now() + 5 * 60 * 1000);
@@ -390,14 +389,10 @@ export const getFeaturedProperty = async (req, res) => {
       error: null
     });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({
-      statusCode: 500,
-      message: error.message,
-      data: null,
-      error: error
-    });
-  }
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 };
 
 
@@ -867,7 +862,7 @@ export const getFeaturedProperty = async (req, res) => {
 // };
 
 
-export const getPropertyById = async (req, res) => {
+export const getPropertyById = async (req, res, next) => {
   try {
     const propertyId = req.params.id;
 
@@ -1228,17 +1223,14 @@ export const getPropertyById = async (req, res) => {
       error: null
     });
   } catch (error) {
-    return res.status(500).json({
-      statusCode: 500,
-      message: error.message,
-      data: null,
-      error: error
-    });
-  }
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 };
 
 
-export const getHostPropertyById = async (req, res) => {
+export const getHostPropertyById = async (req, res, next) => {
   try {
 
 
@@ -1506,17 +1498,14 @@ export const getHostPropertyById = async (req, res) => {
       error: null
     });
   } catch (error) {
-    return res.status(500).json({
-      statusCode: 500,
-      message: error.message,
-      data: null,
-      error: error
-    });
-  }
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 };
 
 
-export const updateProperty = async (req, res) => {
+export const updateProperty = async (req, res, next) => {
   const propertyId = req.params.id;
   const { updates } = req.body;
   //check host or prproty same h na abhishek
@@ -1540,9 +1529,10 @@ export const updateProperty = async (req, res) => {
       data: updatedProperty,
     });
   } catch (error) {
-    console.error('Error updating property:', error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 };
 
 

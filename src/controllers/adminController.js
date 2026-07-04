@@ -3,7 +3,7 @@ import { HostWithdrawHistory } from "../models/HostWithdrawHistory";
 
 
 
-export const hostPayout = async (req, res) => {
+export const hostPayout = async (req, res, next) => {
     try {
 
         const { hostId, payoutAmount, newSecurityAmount } = req.body;
@@ -84,11 +84,8 @@ export const hostPayout = async (req, res) => {
 
 
     } catch (error) {
-        return res.status(500).json({
-            statusCode: 500,
-            data: null,
-            message: error.message,
-            error: error,
-        });
-    }
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 }

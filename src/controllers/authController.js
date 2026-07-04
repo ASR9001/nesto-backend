@@ -143,15 +143,10 @@ export const GoogleUser = async (req, res, next) => {
 		});
 
 	} catch (error) {
-
-
-		res.status(500).json({
-			statusCode: 500,
-			data: null,
-			message: null,
-			error: error.message,
-		});
-	}
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 };
 
 
@@ -246,7 +241,7 @@ export const googleCallback = (req, res, next) => {
 };
 
 
-export const registerHost = async (req, res) => {
+export const registerHost = async (req, res, next) => {
 	try {
 //esme ek otp false vaala bhi chekc lga do 
 		const { firstName, lastName,  mobile, password } = req.body;
@@ -356,17 +351,14 @@ export const registerHost = async (req, res) => {
 		})
 
 	} catch (error) {
-		res.status(500).json({
-			statusCode: 500,
-			data: null,
-			message: error.message,
-			error: error,
-		});
-	}
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 }
 
 
-export const verifyOtp = async (req, res) => {
+export const verifyOtp = async (req, res, next) => {
 	try {
 		let { otp, email } = req.body;
 		if (!otp) {
@@ -415,17 +407,14 @@ export const verifyOtp = async (req, res) => {
 			error: null
 		})
 	} catch (error) {
-		res.status(500).json({
-			statusCode: 500,
-			data: null,
-			message: error.message,
-			error: error,
-		});
-	}
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 }
 
 
-export const sendOtp = async (req, res) => {
+export const sendOtp = async (req, res, next) => {
 	try {
 
 		let { email } = req.body;
@@ -486,18 +475,14 @@ export const sendOtp = async (req, res) => {
 
 
 	} catch (error) {
-
-		return res.status(500).json({
-			statusCode: 500,
-			data: null,
-			message: error.message,
-			error: error,
-		});
-	}
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 }
 
 
-export const hostLogin = async (req, res) => {
+export const hostLogin = async (req, res, next) => {
 	try {
 		let { email, password , fcmToken} = req.body;
 
@@ -605,18 +590,15 @@ export const hostLogin = async (req, res) => {
 
 
 	} catch (error) {
-		return res.status(500).json({
-			statusCode: 500,
-			data: null,
-			message: error.message,
-			error: error,
-		});
-	}
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 }
 
 
 
-export const hostLogout = async (req, res) => {
+export const hostLogout = async (req, res, next) => {
 	try {
 		const hostId = req.hostInfo?.id;
 
@@ -660,17 +642,14 @@ export const hostLogout = async (req, res) => {
 
 
 	} catch (error) {
-		res.status(500).json({
-			statusCode: 500,
-			data: null,
-			message: error.message,
-			error: error,
-		});
-	}
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 }
 
 
-export const forgotPassword = async (req, res) => {
+export const forgotPassword = async (req, res, next) => {
 	try {
 		let { email } = req.body;
 		if (!email) {
@@ -710,18 +689,15 @@ export const forgotPassword = async (req, res) => {
 
 
 	} catch (error) {
-		return res.status(500).json({
-			statusCode: 500,
-			data: null,
-			message: error.message,
-			error: error,
-		});
-	}
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 }
 
 
 
-export const verifyOtpForgotPassword = async (req, res) => {
+export const verifyOtpForgotPassword = async (req, res, next) => {
 	try {
 		let { email, otp } = req.body;
 		if (!email) {
@@ -778,17 +754,14 @@ export const verifyOtpForgotPassword = async (req, res) => {
 
 
 	} catch (error) {
-		return res.status(500).json({
-			statusCode: 500,
-			data: null,
-			message: error.message,
-			error: error,
-		});
-	}
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 }
 
 
-export const resetForgotPassword = async (req, res) => {
+export const resetForgotPassword = async (req, res, next) => {
 	try {
 		let { email, password } = req.body;
 		if (!email) {
@@ -860,12 +833,9 @@ export const resetForgotPassword = async (req, res) => {
 
 
 	} catch (error) {
-		return res.status(500).json({
-			statusCode: 500,
-			data: null,
-			message: error.message,
-			error: error,
-		});
-	}
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 }
 

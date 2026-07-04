@@ -5,7 +5,7 @@ import { generateSignedCloudfrontUrl } from '../services/utilities/s3.js';
 import Booking from '../models/Booking.js';
 
 
-export const createReview = async (req, res) => {
+export const createReview = async (req, res, next) => {
   try {
     const { rating, comment, bookingId, propertyId } = req.body;
     const userId = req.user.id
@@ -54,13 +54,10 @@ export const createReview = async (req, res) => {
     });
 
   } catch (error) {
-    return res.status(500).json({
-      statusCode: 500,
-      message: error.message,
-      data: null,
-      error: error
-    });
-  }
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 };
 
 export const getPropertyReviews = async (req, res) => {
@@ -71,7 +68,7 @@ export const getPropertyReviews = async (req, res) => {
 
 //check working or not
 
-export const fetchPropertyReviews = async (req, res) => {
+export const fetchPropertyReviews = async (req, res, next) => {
   try {
     const propertyId = req.params.id;
     // const propertyId = "682c901f4f03bf65214800de"; // Unused placeholder code
@@ -143,131 +140,14 @@ export const fetchPropertyReviews = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error fetching reviews:', error); // Useful for debugging
-
-    return res.status(500).json({
-      statusCode: 500,
-      message: error.message,
-      data: null,
-      error: error.stack, // Include stack trace for debugging purposes
-    });
-  }
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 };
 
 
-// previous working correct
-// export const propertySearch = async (req, res) => {
-//   try {
-//     const { city, area, guests, checkIn, checkOut } = req.query;
-//     console.log("calling search result")
-//     let query = {
-//       'location.city': { $regex: new RegExp(city, 'i') },
-//       isActive: true,
-//       guestCapacity: { $gte: Number(guests || 1) }
-//     };
-
-//     if (area) {
-//       query['location.address'] = { $regex: new RegExp(area, 'i') };
-//     }
-
-//     // 🟡 Check date overlap (only if both dates provided)
-//     if (checkIn && checkOut) {
-//       const checkInDate = new Date(checkIn);
-//       const checkOutDate = new Date(checkOut);
-
-//       query['unavailability'] = {
-//         $not: {
-//           $elemMatch: {
-//             $or: [
-//               {
-//                 // User check-in falls inside an unavailable range
-//                 startDate: { $lte: checkInDate },
-//                 endDate: { $gte: checkInDate }
-//               },
-//               {
-//                 // User check-out falls inside an unavailable range
-//                 startDate: { $lte: checkOutDate },
-//                 endDate: { $gte: checkOutDate }
-//               },
-//               {
-//                 // The unavailability range is completely inside the requested dates
-//                 startDate: { $gte: checkInDate },
-//                 endDate: { $lte: checkOutDate }
-//               }
-//             ]
-//           }
-//         }
-//       };
-
-//     }
-//     const expiryTime = new Date(Date.now() + 5 * 60 * 1000);
-
-//     const results = await Property.find(query);
-
-
-//     // const updatedContent = [];
-
-
-//     // for (const item of results) {
-//     //   const { images, ...rest } = item.toObject();
-
-//     //   const contentWithUrl = [];
-
-
-//     //   for (const imagePath of images) {
-//     //     const cloudfrontUrl = await generateSignedCloudfrontUrl(imagePath, expiryTime);
-
-//     //     contentWithUrl.push(cloudfrontUrl);
-//     //   }
-
-//     //   updatedContent.push({
-//     //     ...rest,
-//     //     images: contentWithUrl,
-//     //   });
-//     // }
-
-//     const updatedContent = [];
-
-//     for (const item of results) {
-//       const { images, ...rest } = item.toObject();
-
-//       const contentWithUrl = [];
-
-//       for (const imagePath of images) {
-//         // const cloudfrontUrl = await generateSignedCloudfrontUrl(imagePath, expiryTime); // Generate signed URL
-//         const cloudfrontUrl = `${process.env.PUBLIC_CLOUDINARY_BASE_URL}/${imagePath}${process.env.PUBLIC_CLOUDINARY_IMAGE_EXTENSION}`
-
-//         contentWithUrl.push(cloudfrontUrl);
-//       }
-
-//       updatedContent.push({
-//         ...rest,
-//         images: contentWithUrl,
-//       });
-//     }
-
-
-//     return res.status(200).json({
-//       statusCode: 200,
-//       message: "Proprty fetch successfully.",
-//       data: updatedContent,
-//       error: null
-//     })
-
-
-//   } catch (error) {
-//     console.error('Search error:', error);
-//     return res.status(500).json({
-//       statusCode: 500,
-//       message: error.message,
-//       data: null,
-//       error: error
-//     })
-//   }
-// }
-
-
-export const propertySearch = async (req, res) => {
+export const propertySearch = async (req, res, next) => {
   try {
     const { city, area, guests, checkIn, checkOut } = req.query;
     console.log("calling search result");
@@ -421,14 +301,10 @@ export const propertySearch = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Search error:', error);
-    return res.status(500).json({
-      statusCode: 500,
-      message: error.message,
-      data: null,
-      error: error
-    });
-  }
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 };
 
 
@@ -438,7 +314,7 @@ export const propertySearch = async (req, res) => {
 
 
 
-export const getPendingReview = async (req, res) => {
+export const getPendingReview = async (req, res, next) => {
   try {
     const userId = req.user.id;
 
@@ -512,13 +388,10 @@ export const getPendingReview = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("getPendingReview error:", error);
-    return res.status(500).json({
-      statusCode: 500,
-      message: "Internal server error",
-      data: null,
-    });
-  }
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 };
 
 

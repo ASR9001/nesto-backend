@@ -10,7 +10,7 @@ import jwt from 'jsonwebtoken';
 
 
 
-export const updatePassword = async (req, res) => {
+export const updatePassword = async (req, res, next) => {
     try {
 
         const { newPassword } = req.body;
@@ -52,20 +52,15 @@ export const updatePassword = async (req, res) => {
         })
 
     } catch (error) {
-        console.error("Password update error:", error);
-        return res.status(500).json({
-            statusCode: 500,
-            data: null,
-            message: "Internal Server Error",
-            error: error,
-        })
-
-    }
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 }
 
 
 
-export const updateName = async (req, res) => {
+export const updateName = async (req, res, next) => {
     try {
         const { first_name, last_name } = req.body;
         const userId = req.user.id;
@@ -119,20 +114,16 @@ export const updateName = async (req, res) => {
         });
 
     } catch (error) {
-        console.error("Error updating user name:", error); // Corrected the log message
-        return res.status(500).json({
-            statusCode: 500,
-            data: null,
-            message: "Internal Server Error",
-            error: error.message, // send the error message instead of the whole error object
-        });
-    }
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 };
 
 
 
 
-export const getDetails = async (req, res) => {
+export const getDetails = async (req, res, next) => {
     try {
 
 
@@ -217,18 +208,14 @@ export const getDetails = async (req, res) => {
         })
 
     } catch (error) {
-        return res.status(500).json({
-            statusCode: 500,
-            data: null,
-            message: "Internal Server Error",
-            error: error,
-        })
-
-    }
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 }
 
 
-export const sendUserOtp = async (req, res) => {
+export const sendUserOtp = async (req, res, next) => {
     try {
 
         let { email } = req.body;
@@ -274,18 +261,14 @@ export const sendUserOtp = async (req, res) => {
 
 
     } catch (error) {
-
-        return res.status(500).json({
-            statusCode: 500,
-            data: null,
-            message: error.message,
-            error: error,
-        });
-    }
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 }
 
 
-export const sendForgotPasswordOtp = async (req, res) => {
+export const sendForgotPasswordOtp = async (req, res, next) => {
     try {
 
         let { email } = req.body;
@@ -331,19 +314,15 @@ export const sendForgotPasswordOtp = async (req, res) => {
 
 
     } catch (error) {
-
-        return res.status(500).json({
-            statusCode: 500,
-            data: null,
-            message: error.message,
-            error: error,
-        });
-    }
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 }
 
 
 
-export const verifyUserOtp = async (req, res) => {
+export const verifyUserOtp = async (req, res, next) => {
     try {
         let { otp, email } = req.body;
         if (!otp) {
@@ -391,17 +370,14 @@ export const verifyUserOtp = async (req, res) => {
             error: null
         })
     } catch (error) {
-        res.status(500).json({
-            statusCode: 500,
-            data: null,
-            message: error.message,
-            error: error,
-        });
-    }
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 }
 
 
-export const registerUserManually = async (req, res) => {
+export const registerUserManually = async (req, res, next) => {
     try {
         const { firstName, lastName, password } = req.body;
         let { email } = req.body;
@@ -489,15 +465,12 @@ export const registerUserManually = async (req, res) => {
         })
 
     } catch (error) {
-        res.status(500).json({
-            statusCode: 500,
-            data: null,
-            message: error.message,
-            error: error,
-        });
-    }
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
 }
-export const resetPassword = async (req, res) => {
+}
+export const resetPassword = async (req, res, next) => {
     try {
         const { otp, password } = req.body;
         let { email } = req.body;
@@ -580,13 +553,10 @@ export const resetPassword = async (req, res) => {
         })
 
     } catch (error) {
-        res.status(500).json({
-            statusCode: 500,
-            data: null,
-            message: error.message,
-            error: error,
-        });
-    }
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 }
 
 
@@ -695,14 +665,8 @@ export const userLogin = async (req, res , next) => {
 
 
     } catch (error) {
-        const err = new Error(error);
-            err.statusCode = 500;
-            return next(err);
-        // return res.status(500).json({
-        //     statusCode: 500,
-        //     data: null,
-        //     message: error.message,
-        //     error: error,
-        // });
-    }
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+}
 }
