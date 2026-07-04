@@ -590,7 +590,7 @@ export const resetPassword = async (req, res) => {
 }
 
 
-export const userLogin = async (req, res) => {
+export const userLogin = async (req, res , next) => {
     try {
         const { password, fcm_token } = req.body;
         let { email } = req.body;
@@ -634,12 +634,15 @@ export const userLogin = async (req, res) => {
 
 
         if (!isMatch) {
-            return res.status(400).json({
+           return res.status(400).json({
                 statusCode: 400,
                 message: "Invalid credentials.",
                 data: null,
                 error: null
             })
+            // const err = new Error("Invalid credentials");
+            // err.statusCode = 400;
+            // return next(err);
         }
 
 
@@ -692,11 +695,14 @@ export const userLogin = async (req, res) => {
 
 
     } catch (error) {
-        return res.status(500).json({
-            statusCode: 500,
-            data: null,
-            message: error.message,
-            error: error,
-        });
+        const err = new Error(error);
+            err.statusCode = 500;
+            return next(err);
+        // return res.status(500).json({
+        //     statusCode: 500,
+        //     data: null,
+        //     message: error.message,
+        //     error: error,
+        // });
     }
 }

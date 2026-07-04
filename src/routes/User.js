@@ -7,6 +7,7 @@ import { fetchSingleChat, sendMessage } from '../controllers/chatController.js';
 // import { register } from '../controllers/authController';
 import multer from 'multer';
 import { getDetails, registerUserManually, resetPassword, sendForgotPasswordOtp, sendUserOtp, updateName, updatePassword, userLogin, verifyUserOtp } from '../controllers/accountController.js';
+import { authLimiter } from '../middleware/rateLimiter.js';
 
 
 const upload = multer({ storage: multer.memoryStorage() });
@@ -42,12 +43,12 @@ router.get("/account/details" , userVerifyToken , getDetails )
 // router.post("/update-password"  , fetchBookingCharges )
 
 
-router.post("/register/send-otp" , sendUserOtp)
-router.post("/register/verify-otp" , verifyUserOtp)
-router.post('/register/create-user', registerUserManually )
-router.post("/account/login" , userLogin)
-router.post("/account/forgot-password" , sendForgotPasswordOtp)
-router.post("/account/reset-password" , resetPassword)
+router.post("/register/send-otp", authLimiter, sendUserOtp)
+router.post("/register/verify-otp", authLimiter, verifyUserOtp)
+router.post('/register/create-user', authLimiter, registerUserManually)
+router.post("/account/login", authLimiter, userLogin)
+router.post("/account/forgot-password", authLimiter, sendForgotPasswordOtp)
+router.post("/account/reset-password", authLimiter, resetPassword)
 
 
 // router.get('/search', searchProperties);

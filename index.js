@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import http from 'node:http';
 import helmet from 'helmet';
-import rateLimit from 'express-rate-limit';
+import { authLimiter, privateLimiter, publicLimiter } from './src/middleware/rateLimiter.js';
 import compression from 'compression';
 import mongoSanitize from 'express-mongo-sanitize';
 
@@ -24,6 +24,7 @@ import HostRevenueHistory from './src/models/HostRevenueHistory.js';
 import HostEarning from './src/models/HostEarning.js';
 import passport from './src/services/passport.js';
 import { setupSocketServer } from './src/config/socket.js';
+import sendTelegramLog from './src/services/telegramLogger.js';
 
 
 
@@ -52,41 +53,7 @@ app.use(helmet({
 // Compress all HTTP response payloads to optimize bandwidth and speed
 app.use(compression());
 
-// Rate Limiter for Authentication and sensitive endpoints (strict)
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, 
-  max: 20, 
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: {
-    statusCode: 429,
-    message: "Too many authentication attempts, please try again after 15 minutes."
-  }
-});
 
-// Rate Limiter for Private/Authenticated APIs (moderate)
-const privateLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, 
-  max: 100, 
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: {
-    statusCode: 429,
-    message: "Too many authenticated requests, please try again after 15 minutes."
-  }
-});
-
-// Rate Limiter for Public Browsing APIs (more relaxed for properties/reviews)
-const publicLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, 
-  max: 300, 
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: {
-    statusCode: 429,
-    message: "Too many browsing requests, please try again after 15 minutes."
-  }
-});
 
 app.use(passport.initialize());
 
@@ -121,6 +88,9 @@ app.use(cors({
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+
+
 
 
 app.use((req, res, next) => {
@@ -178,11 +148,11 @@ app.use('/api/auth', authLimiter, authRoutes);
 const PORT = process.env.PORT || 6000
 // app.listen(PORT, () => console.log(`Server running on PORT:-${PORT}`))
 server.listen(PORT, () => {
-	console.log(`Server: http://localhost:${PORT}`);
-	// console.log(
-	// 	"\nGet Bot Framework Emulator: https://aka.ms/botframework-emulator",
-	// );
-	// console.log('\nTo talk to your bot, open the emulator select "Open Bot"');
+  console.log(`Server: http://localhost:${PORT}`);
+  // console.log(
+  // 	"\nGet Bot Framework Emulator: https://aka.ms/botframework-emulator",
+  // );
+  // console.log('\nTo talk to your bot, open the emulator select "Open Bot"');
 });
 
 
@@ -190,7 +160,7 @@ server.listen(PORT, () => {
 
 
 cron.schedule("0 10 * * *", async () => {
-// cron.schedule("* * * * *", async () => {
+  // cron.schedule("* * * * *", async () => {
 
   console.log("🚀 Running Booking-Earnings Cron Job at 10 AM IST...");
 
@@ -200,7 +170,7 @@ cron.schedule("0 10 * * *", async () => {
     //  Find bookings whose checkout date < today & not completed yet
     const completedBookings = await Booking.find({
       checkOut: { $lte: now.toDate() },
-      status:  "UPCOMING",
+      status: "UPCOMING",
     });
 
     for (const booking of completedBookings) {
@@ -226,13 +196,13 @@ cron.schedule("0 10 * * *", async () => {
           hostId: booking.hostId,
         })
 
-        if(!hostEarningData){
+        if (!hostEarningData) {
           await HostEarning.create({
             hostId: booking.hostId,
             earning: booking.amount
           });
-        }else{
-          hostEarningData.earning +=booking.amount
+        } else {
+          hostEarningData.earning += booking.amount
           await hostEarningData.save()
         }
 
@@ -247,3 +217,49 @@ cron.schedule("0 10 * * *", async () => {
     console.error("❌ Cron Job Error:", error);
   }
 });
+
+
+//abhishek
+
+
+app.use((err, req, res, next) => {
+
+  const status = err.statusCode || 500;
+
+  res.status(status).json({
+    success: false,
+    message: err.message
+  });
+
+  if (status >= 400) {
+
+    const message = `
+🚨  ERROR
+
+Status: ${status}
+
+Method: ${req.method}
+
+Route: ${req.originalUrl}
+
+IP: ${req.ip}
+
+Time: ${new Date().toLocaleString("en-IN", {
+      timeZone: "Asia/Kolkata",
+    })}
+
+Message:
+${err.message}
+
+Stack:
+${err.stack}
+`;
+
+    setImmediate(() => {
+      sendTelegramLog(message).catch(console.error);
+    });
+  }
+
+});
+
+//abhishek
