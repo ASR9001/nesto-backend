@@ -93,21 +93,21 @@ app.use(express.urlencoded({ extended: true }));
 
 
 
-app.use((req, res, next) => {
-  const start = Date.now();
+// app.use((req, res, next) => {
+//   const start = Date.now();
 
-  console.log(
-    `➡️ ${new Date().toISOString()} | ${req.method} ${req.originalUrl} `
-  );
+//   console.log(
+//     `➡️ ${new Date().toISOString()} | ${req.method} ${req.originalUrl} `
+//   );
 
-  // res.on("finish", () => {
-  //   console.log(
-  //     `⬅️ ${req.method} ${req.originalUrl} | Status: ${res.statusCode} | ${Date.now() - start}ms`
-  //   );
-  // });
+//   // res.on("finish", () => {
+//   //   console.log(
+//   //     `⬅️ ${req.method} ${req.originalUrl} | Status: ${res.statusCode} | ${Date.now() - start}ms`
+//   //   );
+//   // });
 
-  next();
-});
+//   next();
+// });
 
 // Workaround for Express 5 compatibility with express-mongo-sanitize
 // Redefine req.query to be a writable property so that it can be mutated/assigned
