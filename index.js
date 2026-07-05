@@ -159,10 +159,10 @@ server.listen(PORT, () => {
 
 
 
-cron.schedule("0 10 * * *", async () => {
+cron.schedule("30 11 * * *", async () => {
   // cron.schedule("* * * * *", async () => {
 
-  console.log("🚀 Running Booking-Earnings Cron Job at 10 AM IST...");
+  console.log("🚀 Running Booking-Earnings Cron Job at 11:30 AM IST...");
 
   try {
     const now = moment().tz("Asia/Kolkata").startOf("day");
@@ -216,6 +216,9 @@ cron.schedule("0 10 * * *", async () => {
   } catch (error) {
     console.error("❌ Cron Job Error:", error);
   }
+}, {
+  scheduled: true,
+  timezone: "Asia/Kolkata"
 });
 
 
