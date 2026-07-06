@@ -250,7 +250,7 @@ export const fetchSingleChat = async (req, res, next) => {
     const err = new Error(error);
     err.statusCode = 500;
     return next(err);
-}
+  }
 }
 
 
@@ -417,7 +417,7 @@ export const fetchAllChatForUser = async (req, res, next) => {
     const err = new Error(error);
     err.statusCode = 500;
     return next(err);
-}
+  }
 };
 
 
@@ -594,7 +594,7 @@ export const fetchAllChatForHost = async (req, res, next) => {
     const err = new Error(error);
     err.statusCode = 500;
     return next(err);
-}
+  }
 };
 
 
@@ -684,7 +684,7 @@ export const getChatForHost = async (req, res, next) => {
     const err = new Error(error);
     err.statusCode = 500;
     return next(err);
-}
+  }
 };
 
 
@@ -725,6 +725,15 @@ export const sendMessageByHost = async (req, res, next) => {
 
     await newMessage.save();
 
+    try {
+      io.to(userId.toString()).emit("new-message", {
+        message: "Message Sent To User Successfully",
+        data: newMessage,
+      });
+    } catch (socketErr) {
+      console.error("Failed to emit socket message to user:", socketErr);
+    }
+
     return res.status(200).json({
       statusCode: 200,
       data: newMessage,
@@ -736,7 +745,7 @@ export const sendMessageByHost = async (req, res, next) => {
     const err = new Error(error);
     err.statusCode = 500;
     return next(err);
-}
+  }
 };
 
 
@@ -772,7 +781,7 @@ export const fetchProfile = async (req, res, next) => {
     const err = new Error(error);
     err.statusCode = 500;
     return next(err);
-}
+  }
 }
 
 
@@ -825,7 +834,7 @@ export const updateProfile = async (req, res, next) => {
     const err = new Error(error);
     err.statusCode = 500;
     return next(err);
-}
+  }
 }
 
 
@@ -927,8 +936,8 @@ export const sendMessage = async (req, res, next) => {
       "sound": "default"
     }
 
-    io.to(host?._id.toString()).emit("messageSentToInfluencer", {
-      message: `Message Sent To Influencer Successfully`,
+    io.to(host?._id.toString()).emit("messageSentToHost", {
+      message: `Message Sent To Host Successfully`,
       data: newMessage,
       // id: uuidv()
     });
@@ -953,5 +962,5 @@ export const sendMessage = async (req, res, next) => {
     const err = new Error(error);
     err.statusCode = 500;
     return next(err);
-}
+  }
 };
