@@ -1,16 +1,17 @@
-// // firebaseAdmin.js
-// import admin from 'firebase-admin';
-// import { readFileSync } from 'fs';
+import admin from 'firebase-admin';
+import { readFileSync } from 'fs';
+import path from 'path';
 
-// // Replace with path to your Firebase Admin SDK private key
-// const serviceAccount = JSON.parse(
-//   readFileSync('./firebase-service-account.json')
-// );
+const serviceAccountPath = path.join(process.cwd(), 'keys', 'nexofirebase.json');
 
-// if (!admin.apps.length) {
-//   admin.initializeApp({
-//     credential: admin.credential.cert(serviceAccount),
-//   });
-// }
+const serviceAccount = JSON.parse(
+  readFileSync(serviceAccountPath, 'utf8')
+);
 
-// export default admin;
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+  });
+}
+
+export default admin;

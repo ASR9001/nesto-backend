@@ -7,6 +7,7 @@ import Host from "../models/Host.js";
 import Property from "../models/Property.js";
 import axios from "axios";
 import { io } from '../config/socket.js';
+import { send_notification_to_creator_for_message } from '../services/pushNotification.js';
 
 // export const fetchSingleChat = async (req, res) => {
 //     try {
@@ -943,9 +944,10 @@ export const sendMessage = async (req, res, next) => {
     });
 
 
-
+ 
     try {
-      const sendNotification = await axios.post("https://exp.host/--/api/v2/push/send", notificationData)
+      // const sendNotification = await axios.post("https://exp.host/--/api/v2/push/send", notificationData)
+      const sendNotification = await send_notification_to_creator_for_message(notificationData)
     } catch (error) {
       console.log("failed to send Notification")
     }
