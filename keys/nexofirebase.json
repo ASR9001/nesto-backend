@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "nexo-rooms",
+  "private_key_id": "3ae3e00852b62d18c7705e5c3045fad106efe590",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDScGiRa8aw45gw\nCPyW0V0IFxWTvyzOHQfpOAche0A+eZeC2DZVd+sHKwstL/vVw84iIqhjte2R4RMa\nojIK4U0VP2MID6vzcImuIsfLYFpz6/W0xnUf5gMp2sS+LPl700nKTJaKLJb1h8Ia\nUkEqmwaR9Gyr+rBTA6uBktJG2F6ozKTgSlYVdJkTPgw1CK92ofSXMialqQJIH4Mc\ng28kKTwGMNtuQifpyXmtGW2gH5I61CD1OXXc1FjuxCCtjEzyyFjsixqwLAypGmj+\n1Fln0WCA+eSmO88brLKDpVEY7EycOU2WITbzU6d5PZDd+oQM+09pZcHLSuceAR0Y\nlWwhNqXvAgMBAAECggEAXPkJ0fnOYldjZRGLWyyrkAf24fxMFNIRrTGyQNIdy5xX\n2pigxLkC7vtO6EtzVXm5SC6Mu+TkTZelo5Y2SsVIk5MaMzUNULQPOA6ou8tZmy6M\nMy6dD5dFHYhIdQcUwGbUipq0xd42Ycr1cECYBvVP/UsCeib7IOoVq10NJvywMZ3P\nPulC64RMb1UUC6vL7t4ihGCUo7ADHGsGMbcaIQO2WN2wsFnReP/07VFC9gy4KFbC\nwH9LJACNIKfLCywSK7GFdlM3fNIAKGXQMpppWW/Bcp3dH5z8ijjvHwImqAVK37SN\n07+i9Nn2UrjD+qBmtd1Qp5cqp05sBiWoBA4m2QrxvQKBgQDp/ijIKP8ZWk03Brju\nLuLBlZlnDCLwG88itoPgBd6dJCrt6CgRD2uOxLAa1Tnei7GTLwSlKe90j6WrlNoo\n55N4F/RaPTCksLy9lIO4UQZrs3nz5L85jCaruWwIz8+VEDjWKwaTOVh67NAIebeq\nX555Brn3RXYVCVoXWF8RWPB2WwKBgQDmOyWVSmJgEZ/4R39x5VGY3TjYUWuXtM2D\nXUGBI5I81/zeiGRMFIbPXCBzHBmc2JtHWGdh+qHLCNceS7boYRhfO9MXiYTfkcmd\nNlSkyT5SFMyIKVwL2mOJkaGwj2t+zEnoYy60FDD2wolr392jn2JSyj3Ros78nKVO\nR6TwpLBq/QKBgEXohU6n0O9GJ2OVQpMGtwCXLWm4GogaBtycIvI/Tq8sKxdBERdn\nv/67jNG3er6ehcMvfPfLe5sbf6evpS4rYcezgHGlbm8Fzp3lTSU4L+7lhD31zZvn\n33XWxAwt6hri6dgyqpg5vdGcBttBYjoorzQBanYR7qGCVcQ7xstsAwuZAoGBAK61\nS3vSinxkY4RAnVGMtzLNDQn6Hy9sIFgDOGYK3DoXnOgxkAq7uOE6A9XWCQmgxZSK\nXUlYq9YqyzNOOWp148zA1RsTXCVbuCb4x5qUrBoVdnANErBb9RS70nrtGqGJ3Lvg\nJ9y3RcC7NxUJOGOl2zMADZE7ft7q7/ZLH7sM/mLxAoGBAKdTAVcVVOLfABWQG1r1\nfaQ1rDyU7CjphdLZoJnU3UpDqvYE0WCNvY9sPa028N9mKCCcbnkAZIOGxuiG8AqV\nwOBBhNcsKXnHw0kg4dPCjuO5VmNj9hKjkgzJQ87s8xzo1u5FTZKIFPmY8xok5Onr\nVOq57we3PKsZYsS8kMkUSVap\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-fbsvc@nexo-rooms.iam.gserviceaccount.com",
+  "client_id": "100433687009484350653",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40nexo-rooms.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
