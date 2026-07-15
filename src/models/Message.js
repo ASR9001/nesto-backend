@@ -32,6 +32,10 @@ const messageSchema = new Schema({
     required: true,
     enum:["TEXT","IMAGE"]
   },
+  read: {
+    type: Boolean,
+    default: false
+  },
   content: [String],
 
 }, {

@@ -167,6 +167,12 @@ export const fetchSingleChat = async (req, res, next) => {
       })
     }
 
+    // Mark incoming Host messages as read
+    await Message.updateMany(
+      { userId: new ObjectId(userId), propertyId: new ObjectId(propertyId), messageFrom: "Host", read: { $ne: true } },
+      { $set: { read: true } }
+    );
+
     const fetchChat = await Message.find({
       userId: userId,
       propertyId: propertyId
@@ -293,6 +299,20 @@ export const fetchAllChatForUser = async (req, res, next) => {
             },
             createdAt: {
               $first: "$createdAt"
+            },
+            unread: {
+              $sum: {
+                $cond: [
+                  {
+                    $and: [
+                      { $eq: ["$messageFrom", "Host"] },
+                      { $ne: ["$read", true] }
+                    ]
+                  },
+                  1,
+                  0
+                ]
+              }
             }
           }
         },
@@ -357,6 +377,7 @@ export const fetchAllChatForUser = async (req, res, next) => {
             propertyId: 1,
             hostId: 1,
             createdAt: 1,
+            unread: 1,
             hostName: "$host.firstName",
             hostProfilePic: "$host.profilePic",
             propertyImage: {
@@ -402,8 +423,8 @@ export const fetchAllChatForUser = async (req, res, next) => {
         hostProfileImage: hostCloudfrontUrl,
         propertyImage: propertyCloudfrontUrl,
         propertyId: chat.propertyId,
-        propertyTitle: chat.propertyTitle
-
+        propertyTitle: chat.propertyTitle,
+        unread: chat.unread || 0
       };
     });
 
@@ -427,154 +448,104 @@ export const fetchAllChatForHost = async (req, res, next) => {
   try {
     const hostId = req.hostInfo.id; // Get host info from the request
 
-    // Fetch the latest message for each user
-    const fetchChat = await Message.aggregate(
-      [
-        {
-          $match: {
-            hostId: new ObjectId(hostId),
-            messageFrom: "user"
-          }
-        },
-        {
-          $sort: {
-            createdAt: -1 // Sort messages by newest first
-          }
-        },
-        {
-          $group: {
-            _id: "$propertyId",
-            // Group by propertyId first
-            users: {
-              $push: {
-                userId: "$userId",
-                lastMessage: "$messageText",
-                // The latest message
-                unread: {
-                  $sum: {
-                    $cond: [
-                      {
-                        $eq: ["$read", false]
-                      },
-                      1,
-                      0
-                    ]
-                  }
-                },
-                createdAt: "$createdAt",
-                messageFrom: "$messageFrom",
-                type: "$type",
-                content: "$content",
-                avatar: "$avatar"
-              }
-            }
-          }
-        },
-        {
-          $unwind: "$users" // Flatten the users array to process each user individually
-        },
-        {
-          $group: {
-            _id: {
-              propertyId: "$_id",
-              userId: "$users.userId"
-            },
-            // Group by both propertyId and userId
-            lastMessage: {
-              $first: "$users.lastMessage"
-            },
-            unread: {
-              $first: "$users.unread"
-            },
-            createdAt: {
-              $first: "$users.createdAt"
-            },
-            messageFrom: {
-              $first: "$users.messageFrom"
-            },
-            type: {
-              $first: "$users.type"
-            },
-            content: {
-              $first: "$users.content"
-            },
-            avatar: {
-              $first: "$users.avatar"
-            }
-          }
-        },
-        {
-          $addFields: {
-            propertyId: "$_id.propertyId",
-            userId: "$_id.userId" // Extract the propertyId and userId from the _id field
-          }
-        },
-        {
-          $lookup: {
-            from: "users",
-            localField: "userId",
-            foreignField: "_id",
-            as: "userDetails"
-          }
-        },
-        {
-          $lookup: {
-            from: "properties",
-            localField: "propertyId",
-            foreignField: "_id",
-            as: "property"
-          }
-        },
-        {
-          $project: {
-            _id: 0,
-            propertyId: 1,
-            userId: 1,
-            lastMessage: 1,
-            unread: 1,
-            createdAt: 1,
-            messageFrom: 1,
-            type: 1,
-            content: 1,
-            avatar: 1,
-            userName: {
-              $concat: [
+    // Fetch the latest message for each user and property combination
+    const fetchChat = await Message.aggregate([
+      {
+        $match: {
+          hostId: new ObjectId(hostId)
+        }
+      },
+      {
+        $sort: {
+          createdAt: -1 // Sort messages by newest first so $first gets the latest
+        }
+      },
+      {
+        $group: {
+          _id: {
+            propertyId: "$propertyId",
+            userId: "$userId"
+          },
+          lastMessage: { $first: "$messageText" },
+          createdAt: { $first: "$createdAt" },
+          messageFrom: { $first: "$messageFrom" },
+          type: { $first: "$type" },
+          content: { $first: "$content" },
+          avatar: { $first: "$avatar" },
+          unread: {
+            $sum: {
+              $cond: [
                 {
-                  $arrayElemAt: [
-                    "$userDetails.first_name",
-                    0
+                  $and: [
+                    { $eq: ["$messageFrom", "user"] },
+                    { $ne: ["$read", true] }
                   ]
                 },
-                " ",
-                {
-                  $arrayElemAt: [
-                    "$userDetails.last_name",
-                    0
-                  ]
-                }
-              ]
-            },
-            userProfileImage: {
-              $arrayElemAt: [
-                "$userDetails.profile_image",
+                1,
                 0
               ]
-            },
-            property: {
-              $arrayElemAt: ["$property.title", 0]
-            },
-            status: {
-              $arrayElemAt: ["$userDetails.status", 0]
             }
           }
-        },
-        {
-          $sort: {
-            createdAt: -1
-          } // Sort by the latest message
         }
-      ]
-    );
+      },
+      {
+        $addFields: {
+          propertyId: "$_id.propertyId",
+          userId: "$_id.userId"
+        }
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "userId",
+          foreignField: "_id",
+          as: "userDetails"
+        }
+      },
+      {
+        $lookup: {
+          from: "properties",
+          localField: "propertyId",
+          foreignField: "_id",
+          as: "property"
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          propertyId: 1,
+          userId: 1,
+          lastMessage: 1,
+          unread: 1,
+          createdAt: 1,
+          messageFrom: 1,
+          type: 1,
+          content: 1,
+          avatar: 1,
+          userName: {
+            $concat: [
+              { $arrayElemAt: ["$userDetails.first_name", 0] },
+              " ",
+              { $arrayElemAt: ["$userDetails.last_name", 0] }
+            ]
+          },
+          userProfileImage: {
+            $arrayElemAt: ["$userDetails.profile_image", 0]
+          },
+          property: {
+            $arrayElemAt: ["$property.title", 0]
+          },
+          status: {
+            $arrayElemAt: ["$userDetails.status", 0]
+          }
+        }
+      },
+      {
+        $sort: {
+          createdAt: -1
+        } // Sort by the latest message
+      }
+    ]);
 
     if (fetchChat.length === 0) {
       return res.status(200).json({
@@ -603,8 +574,8 @@ export const fetchAllChatForHost = async (req, res, next) => {
 export const getChatForHost = async (req, res, next) => {
   try {
     const hostId = req.hostInfo.id; // Get host info from the request
-
-    const propertyId = req.params.propertyId
+    const propertyId = req.params.propertyId;
+    const { userId } = req.query;
 
     if (!propertyId) {
       return res.status(400).json({
@@ -615,23 +586,39 @@ export const getChatForHost = async (req, res, next) => {
       });
     }
 
-
     const propertyTitle = await Property.findOne({
       _id: new ObjectId(propertyId)
-    }).select('title').lean()
+    }).select('title').lean();
 
+    // Mark messages from the user as read
+    const updateCriteria = {
+      hostId: new ObjectId(hostId),
+      propertyId: new ObjectId(propertyId),
+      messageFrom: "user",
+      read: { $ne: true }
+    };
+    if (userId) {
+      updateCriteria.userId = new ObjectId(userId);
+    }
+    await Message.updateMany(updateCriteria, { $set: { read: true } });
+
+    // Build aggregate match stage
+    const matchStage = {
+      hostId: new ObjectId(hostId),
+      propertyId: new ObjectId(propertyId)
+    };
+    if (userId) {
+      matchStage.userId = new ObjectId(userId);
+    }
 
     const fetchChat = await Message.aggregate(
       [
         {
-          $match: {
-            hostId: new ObjectId(hostId),
-            propertyId: new ObjectId(propertyId)
-          }
+          $match: matchStage
         },
         {
           $sort: {
-            createdAt: 1 // Sort messages by newest first
+            createdAt: 1 // Sort messages by oldest first (chronological order)
           }
         },
         {
@@ -659,8 +646,7 @@ export const getChatForHost = async (req, res, next) => {
             messageText: 1,
             content: 1,
             avatar: 1,
-
-
+            read: 1
           }
         }
       ]
@@ -722,6 +708,7 @@ export const sendMessageByHost = async (req, res, next) => {
       propertyId,
       type,
       content: [],
+      read: false,
     });
 
     await newMessage.save();
@@ -923,6 +910,7 @@ export const sendMessage = async (req, res, next) => {
       propertyId,
       type,
       content: imageUrl ? [imageUrl] : [],
+      read: false,
     });
 
     await newMessage.save();

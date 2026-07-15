@@ -559,7 +559,12 @@ export const getHome = async (req, res, next) => {
     return res.status(200).json({
       statusCode: 200,
       message: "Booking fetch successfully.",
-      data: { fetchBooking, hostEarning },
+      data: {
+        fetchBooking,
+        hostEarning,
+        activeListings: await Property.countDocuments({ hostId: new ObjectId(hostId), isActive: true }),
+        totalListings: await Property.countDocuments({ hostId: new ObjectId(hostId) })
+      },
       error: null
     })
 
