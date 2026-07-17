@@ -76,22 +76,13 @@ export const send_notification_to_creator_for_message = async (
 			},
 			token: fcmToken,
 			data: {
-				message_text: "hii",
-				// type: conversationDetails.type,
-				// user_conversation_id: conversationDetails.conversation_id.toString(),
-				// message_text: conversationDetails.text.toString(),
-				// recipient: "creator",
-				// user_email: userDetails.email.toString(),
-				// creator_email: creatorDetails.email.toString(),
-				// user_id: userDetails._id.toString(),
-				// creator_id: creatorDetails._id.toString(),
-				// user_name: `${userDetails.first_name} ${userDetails.last_name}`,
-				// creator_name: `${creatorDetails.first_name} ${creatorDetails.last_name}`,
-				// message_from: "user",
-				// createdAt: `${new Date(conversationDetails.createdAt).toISOString()}`,
-				// updatedAt: `${new Date(conversationDetails.updatedAt).toISOString()}`,
-				// user_profile_image: random_user_profile(),
-				// totalUnreadMessages: totalUnreadUserChats.toString()
+				click_action: "FLUTTER_NOTIFICATION_CLICK",
+				type: notificationData.data?.type || "NEW_MESSAGE",
+				userId: notificationData.data?.userId ? notificationData.data.userId.toString() : "",
+				propertyId: notificationData.data?.propertyId ? notificationData.data.propertyId.toString() : "",
+				userName: notificationData.data?.userName ? notificationData.data.userName.toString() : "",
+				userProfileImage: notificationData.data?.userProfileImage ? notificationData.data.userProfileImage.toString() : "",
+				message_text: notificationData.body || "",
 			},
 
 			apns: {
@@ -118,5 +109,49 @@ export const send_notification_to_creator_for_message = async (
 	} catch (error) {
 		console.log("notification failed",error)
 		throw error
+	}
+};
+
+export const sendBookingNotificationToHost = async (hostFcmToken, bookingDetails) => {
+	try {
+		if (!hostFcmToken) {
+			console.log("No FCM token found for host, skipping notification");
+			return;
+		}
+
+		const notifyData = {
+			token: hostFcmToken,
+			notification: {
+				title: "New Booking Request!",
+				body: `You have a new booking request for ₹${bookingDetails.totalAmount}. Tap to Accept or Decline.`,
+			},
+			data: {
+				click_action: "FLUTTER_NOTIFICATION_CLICK",
+				type: "NEW_BOOKING",
+				bookingId: bookingDetails._id.toString(),
+				amount: bookingDetails.totalAmount.toString(),
+				propertyName: bookingDetails.propertyName || "",
+			},
+			android: {
+				priority: "high",
+				notification: {
+					sound: "default",
+					channelId: "high_importance_channel",
+				}
+			},
+			apns: {
+				payload: {
+					aps: {
+						sound: "default",
+						contentAvailable: true,
+					}
+				}
+			}
+		};
+
+		await firebase_notify(notifyData);
+		console.log("✅ Booking notification sent to host FCM Token:", hostFcmToken);
+	} catch (error) {
+		console.error("❌ Failed to send booking notification to host:", error);
 	}
 };

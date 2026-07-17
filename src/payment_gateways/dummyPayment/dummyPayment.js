@@ -4,6 +4,7 @@ import BaseRates from "../../models/BaseRate.js";
 import Transaction from "../../models/Transaction.js";
 import Host from "../../models/Host.js";
 import axios from "axios";
+import { sendBookingNotificationToHost } from "../../services/pushNotification.js";
 
 // export const dummyPayment = async (req, res) => {
 //     try {
@@ -298,7 +299,7 @@ export const dummyPayment = async (req, res) => {
             pet: pet,
             amount: propertyBaseCharge * numberOfNights,
             totalAmount: amount,
-            status: "UPCOMING"
+            status: "PENDING"
         });
 
         property.unavailability.push({
@@ -311,26 +312,16 @@ export const dummyPayment = async (req, res) => {
         await property.save();
 
 
-     
-
-
         const fetchHost = await Host.findOne({
-            _id:property.hostId
-        })
+            _id: property.hostId
+        });
 
-
-        const notificationData = {
-            "to": `${fetchHost?.fcmToken}`,
-            "title": "New Booking!",
-            "body": "You have a new booking on Nesto 🎉",
-            "sound": "default"
-        }
-
-
-        try {
-            const sendNotification = await axios.post("https://exp.host/--/api/v2/push/send",  notificationData )
-        } catch (error) {
-            console.log("failed to send Notification")
+        if (fetchHost) {
+            await sendBookingNotificationToHost(fetchHost.fcmToken, {
+                _id: createBooking._id,
+                totalAmount: amount,
+                propertyName: property.title
+            });
         }
 
 

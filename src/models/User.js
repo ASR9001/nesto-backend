@@ -80,6 +80,11 @@ const userSchema = new Schema(
     fcm_token:{
       type:String,
       default:null
+    },
+    walletBalance: {
+      type: Number,
+      default: 0,
+      min: 0
     }
   },
 

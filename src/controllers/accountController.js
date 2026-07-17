@@ -162,6 +162,7 @@ export const getDetails = async (req, res, next) => {
                         last_name: 1,
                         email: 1,
                         profile_image: 1,
+                        walletBalance: 1,
                         createdAt: 1
                     }
                 }
@@ -195,6 +196,7 @@ export const getDetails = async (req, res, next) => {
                 lastName: user.last_name,
                 email: user.email,
                 profileImage: userCloudfrontUrl,
+                walletBalance: user.walletBalance || 0,
                 createdAt: user.createdAt
 
             };

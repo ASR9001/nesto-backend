@@ -922,7 +922,14 @@ export const sendMessage = async (req, res, next) => {
       "to": `${host?.fcmToken}`,
       "title": `New Message from ${user?.first_name}!`,
       "body": `${user?.first_name} says: "${textMsg}"`,
-      "sound": "default"
+      "sound": "default",
+      "data": {
+        "type": "NEW_MESSAGE",
+        "userId": user?._id.toString(),
+        "propertyId": propertyId.toString(),
+        "userName": `${user?.first_name} ${user?.last_name || ''}`,
+        "userProfileImage": user?.profile_image || '',
+      }
     }
 
     io.to(host?._id.toString()).emit("messageSentToHost", {

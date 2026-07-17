@@ -7,6 +7,7 @@ import BaseRates from "../../models/BaseRate.js";
 import Transaction from "../../models/Transaction.js";
 import Booking from "../../models/Booking.js";
 import Host from "../../models/Host.js";
+import { sendBookingNotificationToHost } from "../../services/pushNotification.js";
 
 export const razorpay = new Razorpay({
     key_id: process.env.RAZORPAY_KEY_ID,
@@ -308,7 +309,7 @@ export const verifyRazorPayment = async (req, res) => {
             pet: transaction.pet,
             amount: transaction.amount * transaction.numberOfNights,
             totalAmount: transaction.totalAmount,
-            status: "UPCOMING"
+            status: "PENDING"
         });
 
         property.unavailability.push({
@@ -322,20 +323,14 @@ export const verifyRazorPayment = async (req, res) => {
 
         const fetchHost = await Host.findOne({
             _id: property.hostId
-        })
+        });
 
-        const notificationData = {
-            "to": `${fetchHost?.fcmToken}`,
-            "title": "New Booking!",
-            "body": "You have a new booking on Nesto 🎉",
-            "sound": "default"
-        }
-
-
-        try {
-            const sendNotification = await axios.post("https://exp.host/--/api/v2/push/send", notificationData)
-        } catch (error) {
-            console.log("failed to send Notification")
+        if (fetchHost) {
+            await sendBookingNotificationToHost(fetchHost.fcmToken, {
+                _id: createBooking._id,
+                totalAmount: transaction.totalAmount,
+                propertyName: property.title
+            });
         }
 
 

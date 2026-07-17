@@ -20,6 +20,8 @@ import { connectDB } from './src/config/db.js'
 import cron from "node-cron";
 import moment from "moment-timezone";
 import Booking from './src/models/Booking.js';
+import Property from './src/models/Property.js';
+import User from './src/models/User.js';
 import HostRevenueHistory from './src/models/HostRevenueHistory.js';
 import HostEarning from './src/models/HostEarning.js';
 import passport from './src/services/passport.js';
@@ -220,6 +222,9 @@ cron.schedule("30 11 * * *", async () => {
   scheduled: true,
   timezone: "Asia/Kolkata"
 });
+
+
+
 
 
 //abhishek

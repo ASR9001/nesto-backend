@@ -3,6 +3,7 @@ import express from 'express';
 import { userVerifyToken } from '../middleware/userVerifyToken.js';
 import { dummyPayment } from '../payment_gateways/dummyPayment/dummyPayment.js';
 import { createRazorpayOrder, verifyRazorPayment } from '../payment_gateways/razorpay/razorpay.js';
+import { walletPayment } from '../payment_gateways/walletPayment/walletPayment.js';
 // import { payUSuccessHandler } from '../payment_gateways/payU/payUSuccessHandler.js';
 
 const router = express.Router();
@@ -27,6 +28,7 @@ const minimumRecharge =(req,res,next)=>{
 
 
 router.post('/dummy-payment' ,userVerifyToken, dummyPayment)
+router.post('/wallet-payment', userVerifyToken, walletPayment)
 router.post('/razorpay/create-razorpay-order' ,userVerifyToken, createRazorpayOrder)
 router.post('/razorpay/verify-razorpay-order' ,userVerifyToken, verifyRazorPayment)
 

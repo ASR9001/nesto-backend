@@ -5,6 +5,7 @@ import Refund from '../models/Refund.js';
 import Host from '../models/Host.js';
 import BaseRates from '../models/BaseRate.js';
 import Transaction from '../models/Transaction.js';
+import User from '../models/User.js';
 
 //not in use abhishek
 export const createBooking = async (req, res, next) => {
@@ -191,19 +192,38 @@ export const cancelBooking = async (req, res, next) => {
       });
     }
 
+        if (findBooking.status === 'CANCELLED') {
+      return res.status(400).json({
+        statusCode: 400,
+        message: 'Booking is already cancelled',
+        data: null,
+        error: null
+      });
+    }
+
+    if (findBooking.status === 'COMPLETED') {
+      return res.status(400).json({
+        statusCode: 400,
+        message: 'Cannot cancel a completed booking',
+        data: null,
+        error: null
+      });
+    }
+
     const now = new Date();
     const checkInDate = new Date(findBooking.checkIn);
     const timeDiffInHours = (checkInDate - now) / (1000 * 60 * 60);
 
     let refundPercentage = 0;
-    if (timeDiffInHours >= 72) {
+    if (findBooking.status === 'PENDING') {
+      refundPercentage = 100;
+    } else if (timeDiffInHours >= 72) {
       refundPercentage = 100;
     } else if (timeDiffInHours >= 24) {
       refundPercentage = 50;
     } else {
       refundPercentage = 0;
     }
-
 
     const refundAmount = (findBooking.totalAmount || 0) * (refundPercentage / 100);
     await Refund.create({
@@ -214,10 +234,17 @@ export const cancelBooking = async (req, res, next) => {
       cancelledAt: now
     });
 
-    findBooking.refundStatus = "UNPROCESSED"
-    findBooking.status = "CANCELLED"
-    findBooking.cancelledBy = "USER"
-    await findBooking.save()
+    const user = await User.findById(findBooking.userId);
+    if (user && refundAmount > 0) {
+      user.walletBalance = (user.walletBalance || 0) + refundAmount;
+      await user.save();
+      findBooking.refundStatus = "PROCESSED";
+    } else {
+      findBooking.refundStatus = "UNPROCESSED";
+    }
+    findBooking.status = "CANCELLED";
+    findBooking.cancelledBy = "USER";
+    await findBooking.save();
 
 
     await Property.updateOne(
@@ -421,7 +448,7 @@ export const getHome = async (req, res, next) => {
             hostId: new ObjectId(
               hostId
             ),
-            status: "UPCOMING"
+            status: { $in: ["UPCOMING", "PENDING"] }
           }
         },
         {
@@ -737,7 +764,10 @@ export const fetchTransaction = async (req, res, next) => {
             createdAt: 1,
             title: "$property.title",
             location: "$property.location.city",
-            propertyId: 1
+            propertyId: 1,
+            propertyImage: {
+              $arrayElemAt: ["$property.images", 0]
+            }
           }
         }
       ]
@@ -753,11 +783,22 @@ export const fetchTransaction = async (req, res, next) => {
       })
     }
 
+    const baseUrl = process.env.AWS_S3_CLOUDFRONT_BASE_URL;
+    const extension = process.env.PUBLIC_CLOUDINARY_IMAGE_EXTENSION;
+
+    const updatedTransactions = transactionData.map(txn => {
+      return {
+        ...txn,
+        propertyImage: txn.propertyImage
+          ? `${baseUrl}/${txn.propertyImage}${extension}`
+          : null
+      };
+    });
 
     return res.status(200).json({
       statusCode: 200,
       message: "Transaction fetch successfully",
-      data: transactionData,
+      data: updatedTransactions,
       error: null
     })
 
@@ -876,5 +917,90 @@ export const cancelBookingByHost = async (req, res, next) => {
     const err = new Error(error);
     err.statusCode = 500;
     return next(err);
-}
+  }
+};
+
+export const acceptBookingByHost = async (req, res, next) => {
+  try {
+    const { bookingId } = req.body;
+    const hostId = req.hostInfo.id;
+
+    if (!bookingId) {
+      return res.status(400).json({
+        statusCode: 400,
+        message: 'Booking id not provided.',
+        data: null,
+        error: null
+      });
+    }
+
+    const findBooking = await Booking.findOne({
+      _id: new ObjectId(bookingId)
+    });
+
+    if (!findBooking) {
+      return res.status(400).json({
+        statusCode: 400,
+        message: 'Booking not found',
+        data: null,
+        error: null
+      });
+    }
+
+    // Only allow host to accept their own booking
+    if (findBooking.hostId.toString() !== hostId) {
+      return res.status(400).json({
+        statusCode: 400,
+        message: 'Not authorized to accept this booking',
+        data: null,
+        error: null
+      });
+    }
+
+    if (findBooking.status === 'UPCOMING') {
+      return res.status(200).json({
+        statusCode: 200,
+        message: 'Booking is already accepted.',
+        data: findBooking,
+        error: null
+      });
+    }
+
+    if (findBooking.status !== 'PENDING') {
+      return res.status(400).json({
+        statusCode: 400,
+        message: `Booking cannot be accepted. Current status is ${findBooking.status}`,
+        data: null,
+        error: null
+      });
+    }
+
+    // Update status to UPCOMING
+    findBooking.status = 'UPCOMING';
+    await findBooking.save();
+
+    // Update host earnings
+    const hostEarning = await HostEarning.findOne({ hostId: findBooking.hostId });
+    if (hostEarning) {
+      hostEarning.earning = (hostEarning.earning || 0) + findBooking.amount;
+      await hostEarning.save();
+    } else {
+      await HostEarning.create({
+        hostId: findBooking.hostId,
+        earning: findBooking.amount
+      });
+    }
+
+    return res.status(200).json({
+      statusCode: 200,
+      message: 'Booking accepted successfully',
+      data: findBooking,
+      error: null
+    });
+
+  } catch (error) {
+    const err = new Error(error);
+    err.statusCode = 500;
+    return next(err);
+  }
 };

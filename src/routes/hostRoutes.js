@@ -1,6 +1,6 @@
 import express from 'express';
 import {  fetchHostEarning, fetchNotification, generateUploadURLForHost, generateUploadURLForHostCloudinary, getHostBankDetails, getHostWithdrawalHistory, saveHostBankDetails, updateFcmToken } from '../controllers/hostController.js';
-import { cancelBookingByHost, getAllHostBooking, getHome } from '../controllers/bookingController.js';
+import { acceptBookingByHost, cancelBookingByHost, getAllHostBooking, getHome } from '../controllers/bookingController.js';
 import { hostVerifyToken } from '../middleware/hostVerifyToken.js';
 import { createProperty, disableProperty, getAllPropertiesForHost, getHostPropertyById, updateProperty } from '../controllers/propertyController.js';
 import { fetchAllChatForHost, fetchProfile, getChatForHost, sendMessageByHost, updateProfile } from '../controllers/chatController.js';
@@ -34,6 +34,7 @@ router.post('/update-fcm-token', hostVerifyToken, updateFcmToken);
 
 
 router.post('/booking/cancel-booking', hostVerifyToken, cancelBookingByHost)
+router.post('/booking/accept-booking', hostVerifyToken, acceptBookingByHost)
 
 
 //host fetch earning
