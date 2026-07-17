@@ -361,6 +361,7 @@ export const getFeaturedProperty = async (req, res, next) => {
     )
 
     const updatedContent = [];
+    const baseUrl = process.env.AWS_S3_CLOUDFRONT_BASE_URL;
 
     for (const item of properties) {
       const { images, ...rest } = item
@@ -368,8 +369,11 @@ export const getFeaturedProperty = async (req, res, next) => {
       const contentWithUrl = [];
 
       for (const imagePath of images) {
-        // const cloudfrontUrl = await generateSignedCloudfrontUrl(imagePath, expiryTime); // Generate signed URL
-        const cloudfrontUrl = `${process.env.AWS_S3_CLOUDFRONT_BASE_URL}/${imagePath}`
+        const cloudfrontUrl = imagePath
+          ? (imagePath.startsWith("http://") || imagePath.startsWith("https://")
+            ? imagePath
+            : `${baseUrl}/${imagePath}`)
+          : "";
 
         contentWithUrl.push(cloudfrontUrl);
       }
@@ -1185,13 +1189,22 @@ export const getPropertyById = async (req, res, next) => {
 
       // Handle images
       const contentWithUrl = [];
+      const baseUrl = process.env.AWS_S3_CLOUDFRONT_BASE_URL;
       for (const imagePath of images) {
-        const cloudfrontUrl = `${process.env.AWS_S3_CLOUDFRONT_BASE_URL}/${imagePath}`;
+        const cloudfrontUrl = imagePath
+          ? (imagePath.startsWith("http://") || imagePath.startsWith("https://")
+            ? imagePath
+            : `${baseUrl}/${imagePath}`)
+          : "";
         contentWithUrl.push(cloudfrontUrl);
       }
 
       // Handle host profile picture URL
-      const hostProfilePicUrl = `${process.env.AWS_S3_CLOUDFRONT_BASE_URL}/${hostProfilePic}`;
+      const hostProfilePicUrl = hostProfilePic
+        ? (hostProfilePic.startsWith("http://") || hostProfilePic.startsWith("https://")
+          ? hostProfilePic
+          : `${baseUrl}/${hostProfilePic}`)
+        : "";
      
      
      

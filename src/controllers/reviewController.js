@@ -282,8 +282,13 @@ export const propertySearch = async (req, res, next) => {
     const updatedContent = properties.map((item) => {
       const { images, ...rest } = item;
 
+      const baseUrl = process.env.AWS_S3_CLOUDFRONT_BASE_URL;
       const contentWithUrl = images.map((imagePath) => {
-        const cloudfrontUrl = `${process.env.AWS_S3_CLOUDFRONT_BASE_URL}/${imagePath}`;
+        const cloudfrontUrl = imagePath
+          ? (imagePath.startsWith("http://") || imagePath.startsWith("https://")
+            ? imagePath
+            : `${baseUrl}/${imagePath}`)
+          : "";
         return cloudfrontUrl;
       });
 
