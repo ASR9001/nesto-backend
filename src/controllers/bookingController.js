@@ -6,6 +6,8 @@ import Host from '../models/Host.js';
 import BaseRates from '../models/BaseRate.js';
 import Transaction from '../models/Transaction.js';
 import User from '../models/User.js';
+import HostEarning from '../models/HostEarning.js';
+import { io } from '../config/socket.js';
 
 //not in use abhishek
 export const createBooking = async (req, res, next) => {
@@ -246,6 +248,19 @@ export const cancelBooking = async (req, res, next) => {
     findBooking.cancelledBy = "USER";
     await findBooking.save();
 
+    if (io) {
+      io.to(findBooking.userId.toString()).emit("bookingStatusUpdated", {
+        bookingId: findBooking._id.toString(),
+        status: 'CANCELLED',
+        cancelledBy: 'USER'
+      });
+      io.to(findBooking.hostId.toString()).emit("bookingStatusUpdated", {
+        bookingId: findBooking._id.toString(),
+        status: 'CANCELLED',
+        cancelledBy: 'USER'
+      });
+    }
+
 
     await Property.updateOne(
       { _id: findBooking.propertyId },
@@ -441,153 +456,216 @@ export const getAllHostBooking = async (req, res, next) => {
 export const getHome = async (req, res, next) => {
   try {
     const hostId = req.hostInfo.id
-    const fetchBooking = await Booking.aggregate(
-      [
-        {
-          $match: {
-            hostId: new ObjectId(
-              hostId
-            ),
-            status: { $in: ["UPCOMING", "PENDING"] }
-          }
-        },
-        {
-          $sort: {
-            checkIn: 1
-          }
-        },
-        {
-          $limit:
-
-            3
-        },
-        {
-          $lookup: {
-            from: "users",
-            localField: "userId",
-            foreignField: "_id",
-            as: "user"
-          }
-        },
-        {
-          $lookup: {
-            from: "properties",
-            localField: "propertyId",
-            foreignField: "_id",
-            as: "property"
-          }
-        },
-        {
-          $unwind: {
-            path: "$property"
-          }
-        },
-        {
-          $unwind: {
-            path: "$user"
-          }
-        },
-        {
-          $project: {
-            userId: 1,
-            propertyId: 1,
-            checkIn: 1,
-            checkOut: 1,
-            adult: 1,
-            child: 1,
-            pet: 1,
-            price: "$amount",
-            status: 1,
-            propertyName: "$property.title",
-            propertyLocation: {
-              $concat: [
-                "$property.location.address",
-                " ",
-                "$property.location.city"
-              ]
-            },
-            guestName: {
-              $concat: [
-                "$user.first_name",
-                " ",
-                "$user.last_name"
-              ]
-            },
-            daterange: {
-              $concat: [
-                {
-                  $dateToString: {
-                    format: "%Y-%m-%d",
-                    date: "$checkIn"
-                  }
-                },
-                " to ",
-                {
-                  $dateToString: {
-                    format: "%Y-%m-%d",
-                    date: "$checkOut"
-                  }
+    const fetchBooking = await Booking.aggregate([
+      {
+        $match: {
+          hostId: new ObjectId(hostId),
+          status: "UPCOMING"
+        }
+      },
+      {
+        $sort: {
+          checkIn: 1
+        }
+      },
+      {
+        $limit: 3
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "userId",
+          foreignField: "_id",
+          as: "user"
+        }
+      },
+      {
+        $lookup: {
+          from: "properties",
+          localField: "propertyId",
+          foreignField: "_id",
+          as: "property"
+        }
+      },
+      {
+        $unwind: {
+          path: "$property"
+        }
+      },
+      {
+        $unwind: {
+          path: "$user"
+        }
+      },
+      {
+        $project: {
+          userId: 1,
+          propertyId: 1,
+          checkIn: 1,
+          checkOut: 1,
+          adult: 1,
+          child: 1,
+          pet: 1,
+          price: "$amount",
+          status: 1,
+          propertyName: "$property.title",
+          propertyLocation: {
+            $concat: [
+              "$property.location.address",
+              " ",
+              "$property.location.city"
+            ]
+          },
+          guestName: {
+            $concat: [
+              "$user.first_name",
+              " ",
+              "$user.last_name"
+            ]
+          },
+          daterange: {
+            $concat: [
+              {
+                $dateToString: {
+                  format: "%Y-%m-%d",
+                  date: "$checkIn"
                 }
-              ]
-            }
+              },
+              " to ",
+              {
+                $dateToString: {
+                  format: "%Y-%m-%d",
+                  date: "$checkOut"
+                }
+              }
+            ]
           }
         }
-      ]
+      }
+    ]);
 
-    )
-
-
-
-
-    if (!fetchBooking) {
-      return res.status(200).json({
-        statusCode: 200,
-        message: "No Booking found",
-        data: [],
-        error: null
-      })
-    }
-
-
-    const hostEarning = await Host.aggregate(
-      [
-        {
-          $match: {
-            _id: new ObjectId(hostId)
-          }
-        },
-        {
-          $lookup: {
-            from: "hostearnings",
-            localField: "_id",
-            foreignField: "hostId",
-            as: "earning"
-          }
-        },
-        {
-          $unwind: {
-            path: "$earning"
-          }
-        },
-        {
-          $project: {
-            email: 1,
-            firstName: 1,
-            lastName: 1,
-            profilePic: 1,
-            earning: "$earning.earning",
-            totalWithdrawal: "$earning.totalWithdrawal"
+    const pendingBookings = await Booking.aggregate([
+      {
+        $match: {
+          hostId: new ObjectId(hostId),
+          status: "PENDING"
+        }
+      },
+      {
+        $sort: {
+          checkIn: 1
+        }
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "userId",
+          foreignField: "_id",
+          as: "user"
+        }
+      },
+      {
+        $lookup: {
+          from: "properties",
+          localField: "propertyId",
+          foreignField: "_id",
+          as: "property"
+        }
+      },
+      {
+        $unwind: {
+          path: "$property"
+        }
+      },
+      {
+        $unwind: {
+          path: "$user"
+        }
+      },
+      {
+        $project: {
+          userId: 1,
+          propertyId: 1,
+          checkIn: 1,
+          checkOut: 1,
+          adult: 1,
+          child: 1,
+          pet: 1,
+          price: "$amount",
+          status: 1,
+          propertyName: "$property.title",
+          propertyLocation: {
+            $concat: [
+              "$property.location.address",
+              " ",
+              "$property.location.city"
+            ]
+          },
+          guestName: {
+            $concat: [
+              "$user.first_name",
+              " ",
+              "$user.last_name"
+            ]
+          },
+          daterange: {
+            $concat: [
+              {
+                $dateToString: {
+                  format: "%Y-%m-%d",
+                  date: "$checkIn"
+                }
+              },
+              " to ",
+              {
+                $dateToString: {
+                  format: "%Y-%m-%d",
+                  date: "$checkOut"
+                }
+              }
+            ]
           }
         }
-      ]
+      }
+    ]);
 
-    )
+    const hostEarning = await Host.aggregate([
+      {
+        $match: {
+          _id: new ObjectId(hostId)
+        }
+      },
+      {
+        $lookup: {
+          from: "hostearnings",
+          localField: "_id",
+          foreignField: "hostId",
+          as: "earning"
+        }
+      },
+      {
+        $unwind: {
+          path: "$earning"
+        }
+      },
+      {
+        $project: {
+          email: 1,
+          firstName: 1,
+          lastName: 1,
+          profilePic: 1,
+          earning: "$earning.earning",
+          totalWithdrawal: "$earning.totalWithdrawal"
+        }
+      }
+    ]);
 
     return res.status(200).json({
       statusCode: 200,
       message: "Booking fetch successfully.",
       data: {
         fetchBooking,
+        pendingBookings,
         hostEarning,
         activeListings: await Property.countDocuments({ hostId: new ObjectId(hostId), isActive: true }),
         totalListings: await Property.countDocuments({ hostId: new ObjectId(hostId) })
@@ -891,6 +969,15 @@ export const cancelBookingByHost = async (req, res, next) => {
     findBooking.reason = reason
     await findBooking.save()
 
+    if (io) {
+      io.to(findBooking.userId.toString()).emit("bookingStatusUpdated", {
+        bookingId: findBooking._id.toString(),
+        status: 'CANCELLED',
+        cancelledBy: 'HOST',
+        reason: reason
+      });
+    }
+
 
     await Property.updateOne(
       { _id: findBooking.propertyId },
@@ -978,6 +1065,13 @@ export const acceptBookingByHost = async (req, res, next) => {
     // Update status to UPCOMING
     findBooking.status = 'UPCOMING';
     await findBooking.save();
+
+    if (io) {
+      io.to(findBooking.userId.toString()).emit("bookingStatusUpdated", {
+        bookingId: findBooking._id.toString(),
+        status: 'UPCOMING'
+      });
+    }
 
     // Update host earnings
     const hostEarning = await HostEarning.findOne({ hostId: findBooking.hostId });

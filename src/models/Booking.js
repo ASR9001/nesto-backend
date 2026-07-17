@@ -85,6 +85,20 @@ bookingSchema.index({ hostId: 1 });
 bookingSchema.index({ propertyId: 1 });
 bookingSchema.index({ status: 1 });
 
+bookingSchema.post('save', async function (doc) {
+  try {
+    const { io } = await import('../config/socket.js');
+    if (io) {
+      io.to(doc.hostId.toString()).emit('booking_notification', {
+        bookingId: doc._id,
+        status: doc.status
+      });
+    }
+  } catch (error) {
+    console.error('Error in Booking post-save socket emit:', error);
+  }
+});
+
 const Booking = mongoose.model('Booking', bookingSchema);
 export default Booking;
 
