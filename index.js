@@ -1,3 +1,4 @@
+import './src/loadEnv.js';
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
@@ -30,8 +31,7 @@ import sendTelegramLog from './src/services/telegramLogger.js';
 
 
 
-// Load env variables
-dotenv.config();
+// Env variables are loaded at the very top via loadEnv.js
 
 // Connect DB
 connectDB();

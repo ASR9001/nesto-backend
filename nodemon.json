@@ -1,0 +1,10 @@
+{
+  "ignore": [
+    "keys/*",
+    "logs/*",
+    ".env.*"
+  ],
+  "watch": ["src", "index.js"],
+  "ext": "js,json",
+  "exec": "node src/prestart.js && node index.js"
+}

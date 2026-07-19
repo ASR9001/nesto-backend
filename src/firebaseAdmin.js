@@ -2,7 +2,8 @@ import admin from 'firebase-admin';
 import { readFileSync } from 'fs';
 import path from 'path';
 
-const serviceAccountPath = path.join(process.cwd(), 'keys', 'nexofirebase.json');
+const firebaseConfigFileName = process.env.FIREBASE_SERVICE_ACCOUNT || 'nexofirebase.json';
+const serviceAccountPath = path.join(process.cwd(), 'keys', firebaseConfigFileName);
 
 const serviceAccount = JSON.parse(
   readFileSync(serviceAccountPath, 'utf8')
