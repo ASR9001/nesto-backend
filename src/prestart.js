@@ -4,20 +4,27 @@ import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import path from 'path';
 import fs from 'fs';
 
-// Load root .env file containing Doppler access token
-dotenv.config();
+import { fileURLToPath } from 'url';
 
-const currDir = process.cwd();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const projectRoot = path.join(__dirname, '..');
+
+// Load root .env file containing Doppler access token relative to this file
+dotenv.config({ path: path.join(projectRoot, '.env') });
+
 const ENV = process.env.BACKEND_ENV || 'dev';
 global.ENV = ENV;
 
-const envPath = path.join(currDir, `.env.${ENV}`);
+const envPath = path.join(projectRoot, `.env.${ENV}`);
 
 const DOPPLER_PROJECT = process.env.DOPPLER_PROJECT || 'nesto-backend';
 const DOPPLER_CONFIG = `${ENV}_backend`;
 
+const dopplerToken = process.env.DOPPLERSDK_ACCESS_TOKEN || process.env.DOPPLER_TOKEN || process.env.DOPPLER_ACCESS_TOKEN;
+
 const doppler = new DopplerSDK({
-	accessToken: process.env.DOPPLERSDK_ACCESS_TOKEN,
+	accessToken: dopplerToken,
 });
 
 export async function updateEnvFile() {
@@ -51,7 +58,7 @@ export async function updateEnvFile() {
 
 export async function downloadS3Keys() {
 	try {
-		const keysDir = path.join(currDir, "keys");
+		const keysDir = path.join(projectRoot, "keys");
 		if (fs.existsSync(keysDir)) {
 			console.log("[Prestart] Deleting existing keys directory to ensure fresh fetch...");
 			fs.rmSync(keysDir, { recursive: true, force: true });
@@ -108,7 +115,7 @@ export async function downloadS3Keys() {
 	}
 }
 
-if (process.env.DOPPLERSDK_ACCESS_TOKEN) {
+if (dopplerToken) {
 	(async () => {
 		try {
 			await updateEnvFile();
@@ -120,5 +127,5 @@ if (process.env.DOPPLERSDK_ACCESS_TOKEN) {
 		}
 	})();
 } else {
-	console.warn("[Prestart] DOPPLERSDK_ACCESS_TOKEN not found in root .env. Skipping Doppler & AWS key fetch.");
+	console.warn("[Prestart] Doppler token not found in root .env or process environment. Skipping Doppler & AWS key fetch.");
 }
