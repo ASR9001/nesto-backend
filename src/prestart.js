@@ -116,16 +116,14 @@ export async function downloadS3Keys() {
 }
 
 if (dopplerToken) {
-	(async () => {
-		try {
-			await updateEnvFile();
-			await downloadS3Keys();
-			console.log("[Prestart] Setup completed successfully!");
-		} catch (err) {
-			console.error("[Prestart] Setup failed:", err);
-			process.exit(1);
-		}
-	})();
+	try {
+		await updateEnvFile();
+		await downloadS3Keys();
+		console.log("[Prestart] Setup completed successfully!");
+	} catch (err) {
+		console.error("[Prestart] Setup failed:", err);
+		process.exit(1);
+	}
 } else {
 	console.warn("[Prestart] Doppler token not found in root .env or process environment. Skipping Doppler & AWS key fetch.");
 }

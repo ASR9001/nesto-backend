@@ -6,5 +6,5 @@
   ],
   "watch": ["src", "index.js"],
   "ext": "js,json",
-  "exec": "node src/prestart.js && node index.js"
+  "exec": "node index.js"
 }

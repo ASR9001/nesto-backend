@@ -5,8 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "prestart": "node src/prestart.js",
-    "start": "node src/prestart.js && node index.js",
+    "start": "node index.js",
     "dev": "nodemon"
   },
   "keywords": [],

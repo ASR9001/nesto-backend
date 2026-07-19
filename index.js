@@ -1,3 +1,4 @@
+import './src/prestart.js';
 import './src/loadEnv.js';
 import express from 'express';
 import dotenv from 'dotenv';
