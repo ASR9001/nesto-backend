@@ -57,7 +57,7 @@ export async function downloadS3Keys() {
 			fs.rmSync(keysDir, { recursive: true, force: true });
 		}
 		fs.mkdirSync(keysDir, { recursive: true });
-
+ 
 		// List of keys to download
 		const cloudfrontPrivateKeyName = process.env.AWS_S3_CLOUDFRONT_PRIVATE_KEY_NAME || 'cloudfront-private-key.pem';
 		const firebaseServiceAccountName = process.env.FIREBASE_SERVICE_ACCOUNT || 'nexofirebase.json';
