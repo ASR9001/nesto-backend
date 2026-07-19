@@ -70,21 +70,7 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
   : [];
 
 app.use(cors({
-  origin: function (origin, callback) {
-    if (
-      !origin ||
-      allowedOrigins.length === 0 ||
-      allowedOrigins.includes('*') ||
-      allowedOrigins.includes(origin) ||
-      origin.endsWith('.devtunnels.ms') ||
-      origin.endsWith('.loca.lt') ||
-      origin.endsWith('.lhr.life')
-    ) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+  origin: true,
   credentials: true,
 }));
 
